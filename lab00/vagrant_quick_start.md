@@ -18,9 +18,7 @@
 
 1. Почему у меня внезапно выросло занимаемое место в виртуальной машине развернутой с помощью Vagrant?
 
-    Скорее всего вы добавили дополнительное блочное устройство и оно лежит в одной директории
-    с Vagrantfile. Vagrant в свою очередь при `Vagrant up` делает rsync всего, что есть рядом с
-    Vagrantfile в директорию виртуальной машины `/vagrant/`
+    Скорее всего вы добавили дополнительное блочное устройство и оно лежит  в одной директории с Vagrantfile. Vagrant в свою очередь при `vagrant up` делает rsync всего, что есть рядом с Vagrantfile в директорию виртуальной машины `/vagrant/`
 
 2. Как добавить дополнительные диски с помощью Vagrantfile
 
@@ -28,26 +26,26 @@
     home = ENV['HOME'] # Используем глобальную переменную $HOME
 
     MACHINES = {
-    :otuslinux => {
-        :box_name => "centos/7",
-        :ip_addr => '192.168.11.101',
-    :disks => {
-        :sata1 => {
-            :dfile => home + '/VirtualBox VMs/sata1.vdi', # Указываем где будут лежать файлы наших дисков
-            :size => 8192,
-            :port => 1
-        },
-        :sata2 => {
-            :dfile => home + '/VirtualBox VMs/sata2.vdi',
-            :size => 1024, # Megabytes
-            :port => 2
-        },
-        :sata3 => {
-            :dfile => home + '/VirtualBox VMs/sata3.vdi',
-            :size => 1024,
-            :port => 3
+        :otuslinux => {
+            :box_name => "centos/7",
+            :ip_addr => '192.168.11.101',
+            :disks => {
+                :sata1 => {
+                    :dfile => home + '/VirtualBox VMs/sata1.vdi', # Указываем где будут лежать файлы наших дисков
+                    :size => 8192,
+                    :port => 1
+                    },
+                :sata2 => {
+                    :dfile => home + '/VirtualBox VMs/sata2.vdi',
+                    :size => 1024, # Megabytes
+                    :port => 2
+                    },
+                :sata3 => {
+                    :dfile => home + '/VirtualBox VMs/sata3.vdi',
+                    :size => 1024,
+                    :port => 3
+                    }
+                }
+            }
         }
-    }
-    },
-    }
     ```
