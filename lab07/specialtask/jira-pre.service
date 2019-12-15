@@ -1,0 +1,12 @@
+[Unit]
+Description=Jira Server Env Config (jira-pre.service by mbfx)
+
+[Service]
+Type=oneshot
+User=jira
+Group=jira
+ExecStart=/usr/bin/bash /opt/atlassian/jira/bin/start-jira.sh start
+
+[Install]
+WantedBy=multi-user.target
+

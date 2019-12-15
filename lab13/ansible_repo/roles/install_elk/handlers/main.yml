@@ -1,0 +1,16 @@
+---
+- name: start_elasticsearch
+  systemd:
+    name: elasticsearch
+    state: restarted
+
+- name: start_kibana
+  systemd:
+    name: kibana
+    state: restarted
+
+- name: start_logstash
+  systemd:
+    name: logstash
+    state: restarted
+...

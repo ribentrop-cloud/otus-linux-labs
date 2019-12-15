@@ -1,0 +1,62 @@
+---
+- name: install systemd-journal-gateway # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - systemd-journal-gateway
+
+- name: mod Storage /etc/systemd/journald.conf
+  replace:
+    path: /etc/systemd/journald.conf
+    regexp: '^#Storage=auto'
+    replace: "Storage=persistent"
+
+- name: create /var/log/journal/remote and permissions
+  file:
+    path: /var/log/journal/remote
+    state: directory
+    owner: systemd-journal-remote
+    group: systemd-journal-remote
+
+- name: make copy from /etc/systemd/system/systemd-journal-remote.service
+  copy:
+    src: /lib/systemd/system/systemd-journal-remote.service
+    dest: /etc/systemd/system/
+    remote_src: yes
+
+- name: change listen-http systemd-journal-remote.service
+  replace:
+    path: /etc/systemd/system/systemd-journal-remote.service
+    regexp: 'listen-https'
+    replace: "listen-http"
+
+- name: change WatchdogSec systemd-journal-remote.service
+  replace:
+    path: /etc/systemd/system/systemd-journal-remote.service
+    regexp: '^WatchdogSec=10min'
+    replace: "WatchdogSec=30"
+
+# Фиксим баг с зависимостями сокета, чтобы нормально перезапускать systemd-journal-remote.service
+# Шаг 1. Сделаем копию /lib/systemd/system/systemd-journal-remote.socket
+- name: make copy from /etc/systemd/system/systemd-journal-remote.socket
+  copy:
+    src: /lib/systemd/system/systemd-journal-remote.socket
+    dest: /etc/systemd/system/
+    remote_src: yes
+# Шаг 2. Добавим явную зависимость systemd-journal-remote.socket от systemd-journal-remote.service
+- name: add PartOf (systemd-journal-remote.socket)
+  lineinfile:
+    path: /etc/systemd/system/systemd-journal-remote.socket
+    line: 'PartOf=systemd-journal-remote.service'
+    state: present
+    insertbefore: "^Description=Journal Remote Sink Socket*"
+
+- name: enable systemd-journal-remote
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: systemd-journal-remote
+    state: restarted
+...

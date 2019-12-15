@@ -1,0 +1,10 @@
+---
+domain: mydomain.test # Имя домена глобально
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+elk_ip_addr: 192.168.11.121
+elk_hostname: elk
+log_ip_addr: 192.168.11.120
+log_hostname: log
+web_ip_addr: 192.168.11.119
+web_hostname: web
+...

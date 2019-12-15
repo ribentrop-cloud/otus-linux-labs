@@ -1,0 +1,11 @@
+---
+- name: restart_network
+  systemd:
+    name: network
+    state: restarted
+
+- name: restart_ntpd
+  systemd:
+    name: ntpd
+    state: restarted
+...

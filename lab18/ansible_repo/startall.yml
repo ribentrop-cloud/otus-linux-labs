@@ -1,0 +1,10 @@
+---
+- name: quagga (otus-ospf homework)
+  hosts: all
+  become: true
+  tags:
+    - base
+
+  roles:
+    - install_quagga
+...

@@ -1,0 +1,8 @@
+[{{ master_hostname }}.{{ domain }}]
+description =  "PostgreSQL Database Backup(Streaming-Only)"
+conninfo = host={{ master_hostname }}.{{ domain }} user={{ barman_username }} dbname=postgres
+streaming_conninfo = host={{ master_hostname }}.{{ domain }} user={{ barman_streaming_username }} dbname=postgres
+backup_method = postgres
+streaming_archiver = on
+slot_name = {{ barman_slot }}
+archiver = on

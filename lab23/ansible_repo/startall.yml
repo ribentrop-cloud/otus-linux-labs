@@ -1,0 +1,34 @@
+---
+- name: pgsql (otus-pgsql homework)
+  hosts: replica
+  become: true
+  gather_facts: yes
+  tags:
+    - base
+
+  roles:
+    - pg_install
+
+- name: pgsql (otus-pgsql homework)
+  hosts: master
+  become: true
+  gather_facts: yes
+  tags:
+    - base
+
+  roles:
+    - pg_install
+    - pg_replication
+
+- name: base (otus-pgsql homework)
+  hosts: backup
+  become: true
+  gather_facts: yes
+  tags:
+    - base
+
+  roles:
+    - base_config
+    - pg_client
+    - pg_barman
+...

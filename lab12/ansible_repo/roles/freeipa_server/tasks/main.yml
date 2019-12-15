@@ -1,0 +1,42 @@
+---
+- name: packages install # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - tzdata
+    - ipa-server
+    - ipa-server-dns
+
+- name: disable chronyd # Выключим chrony.
+  systemd:
+    name: chronyd
+    enabled: false
+
+- name: set timezone # Задаём часовой пояс.
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: enable ntpd # Рестартим NTP.
+  systemd:
+    name: ntpd
+    state: restarted
+    enabled: true
+
+- name: hostname # Зададим машине нужное имя.
+  hostname: 
+    name: "{{ hostname }}.{{ domain }}"
+
+- name: hosts # Подправим Hosts: заменим 127.0.0.1 на реальный адрес с соотнесём его с fqdn
+  replace:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1(\s+){{ hostname }}(\s+){{ hostname }}.*'
+    replace: "{{ my_ip }} {{ hostname }}.{{ domain }} {{ hostname }}"
+    backup: yes # Бекап!
+
+- name: ipa-server # Установим сервер FreeIPA с нужными настройками
+  ignore_errors: true
+  shell: "ipa-server-install -U --ds-password={{ dspassword }} --admin-password={{ adminpassword }} --domain={{ domain }} --realm={{ realm }} --hostname={{ hostname }}.{{ domain }} --setup-dns --mkhomedir --auto-forwarders --auto-reverse --no-dnssec-validation"
+...

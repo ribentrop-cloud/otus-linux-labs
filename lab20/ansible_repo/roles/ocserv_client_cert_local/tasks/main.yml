@@ -1,0 +1,55 @@
+---
+# ЭКСПЕРИМЕНТ! НЕ РАБОТАЕТ КАК НАДО!
+# ОСТАВЛЕН ДЛЯ ДАЛЬНЕЙШЕЙ ДОРАБОТКИ!
+- name: Generate an OpenSSL private key with a different size (2048 bits)
+  openssl_privatekey:
+    path: "/tmp/{{ ocserv_client_private_key_name }}"
+    size: "{{ ocserv_private_key_bits }}"
+
+# TODO: не вставляет UID в DN
+# Средствами модулей ansible это, похоже, не сделать
+# Можно или openssl (сложный конфиг), или certtool (проще, вагон мануалов, но слишком поверхностно)
+- name: Generate an OpenSSL CSR for ocserv
+  openssl_csr:
+    path: "/tmp/{{ ocserv_client_private_key_name }}.csr"
+    privatekey_path: "/tmp/{{ ocserv_client_private_key_name }}"
+    country_name: RU
+    organization_name: mbfx
+    email_address: mbfx@mail.ru
+    common_name: vagrant # должен совпадать с login username?
+    key_usage:
+      - digitalSignature
+    extended_key_usage:
+      - clientAuth
+      - userId
+
+- name: Generate client certificate signed with my own CA certificate
+  openssl_certificate:
+    path: "/tmp/{{ ocserv_client_cert_name }}"
+    csr_path: "/tmp/{{ ocserv_client_private_key_name }}.csr"
+    ownca_path: "{{ pki_CA_certs_path }}{{ CA_cert_name }}"
+    ownca_privatekey_path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    provider: ownca
+    key_usage:
+      - digitalSignature
+    key_usage_strict: true
+    extended_key_usage:
+      - clientAuth
+      - userId
+    extended_key_usage_strict: true
+
+- name: Fetch ocserv client certificate from server to localhost /tmp
+  fetch:
+    src: "/tmp/{{ ocserv_client_cert_name }}"
+    dest: /tmp
+
+- name: Fetch ocserv client private key from server to localhost /tmp
+  fetch:
+    src: "/tmp/{{ ocserv_client_private_key_name }}"
+    dest: /tmp
+
+- name: Fetch CA certificate from server to localhost /tmp
+  fetch:
+    src: "{{ pki_CA_certs_path }}{{ CA_cert_name }}"
+    dest: /tmp
+...

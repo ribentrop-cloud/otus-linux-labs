@@ -1,0 +1,111 @@
+---
+# Создадим группу admin и ...
+- name: create group "admin"
+  group:
+    name: "{{ admin_group }}"
+    state: present
+# ... добавим туда пользователя root
+- name: root to group "admin"
+  user:
+    name: root 
+    append: yes
+    groups: "{{ admin_group }}"
+
+# ... добавим туда пользователя vagrant
+- name: vagrant to group "admin"
+  user:
+    name: vagrant
+    append: yes
+    groups: "{{ admin_group }}"
+
+# ... добавим муда свежесозданного пользователя для тестов группы admin.
+- name: create test admin user
+  user:
+    name: "{{ testadminusername }}"
+    password: "{{ testadminuserpassword | password_hash('sha512') }}" 
+    state: present
+    update_password: on_create
+    append: yes
+    groups: "{{ admin_group }}"
+
+# Создадим тестовго пользователя без группы admin
+- name: create test non-admin user
+  user:
+    name: "{{ testusername }}"
+    password: "{{ testuserpassword | password_hash('sha512') }}" 
+    state: present
+    update_password: on_create
+
+# Раз будем работать со временем, то надо бы его уточнить:
+# Ставим ntp
+- name: ntp install
+  yum:
+    name: ntp
+    state: present
+
+# Ставим пакет информации о часовых поясах
+- name: tzdata install
+  yum:
+    name: tzdata
+    state: present
+
+# Задаём часовой пояс
+- name: set timezone
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+# Рестартим ntp: со временем закончили.
+- name: enable ntpd
+  systemd:
+    name: ntpd
+    state: restarted
+    enabled: true
+
+# Ставим epel, т.к. в стандартной поставке pam_script нет
+- name: epel-release install
+  yum:
+    name: epel-release
+    state: present
+
+# Ставим pam_script
+- name: pam_script install
+  yum:
+    name: pam_script
+    state: present
+
+# Развёртываем скрипт из шаблона ...
+- name: script provision from template
+  template:
+    backup: true
+    owner: root
+    group: wheel
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: a+x
+  with_items:
+    - { src: isdayoff_check.sh.j2, dest: "{{ isdayoff_script_path }}{{ pam_script_acct_name }}" }
+
+# ... и создаем нужное правило в password-auth
+- name: insert a new rule after an existing rule
+  pamd:
+    name: password-auth
+    type: account
+    control: required
+    module_path: pam_unix.so
+    new_type: account
+    new_control: required
+    new_module_path: pam_script.so
+    module_arguments: ['{{ isdayoff_script_path }}{{ pam_script_acct_name }}, onerr=fail']
+    state: after
+    backup: yes # Бекап!
+
+# Разрешим подключаться к серверу по паролю, чтобы проверить работу скрипта.
+- name: permit ssh with password
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: '^PasswordAuthentication no'
+    line: 'PasswordAuthentication yes'
+    state: present
+    backup: yes # Бекап!
+  notify: restart_sshd # Рестарт после внесения изменений
+...

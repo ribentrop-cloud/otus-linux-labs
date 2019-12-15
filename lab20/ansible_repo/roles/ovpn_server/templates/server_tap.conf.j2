@@ -1,0 +1,19 @@
+port 1194
+proto udp
+dev tap1
+topology subnet
+server 10.0.10.0 255.255.255.0
+#ifconfig-pool-persist ipp.txt
+#client-config-dir ccd
+client-to-client
+keepalive 10 120
+persist-tun
+#status openvpn-status.log
+#log-append  openvpn.log
+verb 3
+mute 20
+dh {{ ovpn_server_config_path }}{{ ovpn_DH_filename }}
+ca {{ pki_CA_certs_path }}{{ CA_cert_name }}
+cert {{ pki_ovpn_certs_path }}{{ ovpn_cert_name }}
+key {{ pki_ovpn_private_path }}{{ ovpn_private_key_name }}
+persist-key

@@ -1,0 +1,35 @@
+---
+- name: install openvpn
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - openvpn
+
+- name: generate DH
+  openssl_dhparam:
+    path: "{{ ovpn_server_config_path }}{{ ovpn_DH_filename }}"
+    size: "{{ ovpn_DH_size }}"
+
+- name: install configs from template
+  template:
+    backup: true
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: server_tap.conf.j2, dest: "{{ ovpn_server_config_path }}server_tap.conf" }
+    - { src: server_tun.conf.j2, dest: "{{ ovpn_server_config_path }}server_tun.conf" }
+
+- name: enable and start openvpn-server@server_tun
+  systemd:
+    name: openvpn-server@server_tun
+    enabled: true
+  notify: restart_openvpn-server@server_tun
+
+- name: enable and start openvpn-server@server_tap
+  systemd:
+    name: openvpn-server@server_tap
+    enabled: true
+  notify: restart_openvpn-server@server_tap
+...

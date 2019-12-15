@@ -1,0 +1,61 @@
+---
+- name: Generate an OpenSSL private key for OpenVPN client
+  openssl_privatekey:
+    path: "{{ pki_ovpn_private_path }}{{ ovpn_client_private_key_name }}"
+    size: "{{ ovpn_private_key_bits }}"
+
+- name: Generate an OpenSSL CSR for OpenVPN client
+  openssl_csr:
+    path: "{{ pki_ovpn_certs_path }}{{ ovpn_client_private_key_name }}.csr"
+    privatekey_path: "{{ pki_ovpn_private_path }}{{ ovpn_client_private_key_name }}"
+    country_name: "{{ ovpn_country_name }}"
+    organization_name: "{{ ovpn_org_name }}"
+    email_address: "{{ ovpn_email_addr }}"
+    common_name: "{{ ovpn_client_common_name }}"
+    key_usage:
+      - digitalSignature
+    extended_key_usage:
+      - clientAuth
+
+- name: Fetch CSR file from client to localhost /tmp
+  fetch:
+    src: "{{ pki_ovpn_certs_path }}{{ ovpn_client_private_key_name }}.csr"
+    dest: /tmp
+
+- name: Copy CSR file from localhost to server
+  copy:
+    src: "/tmp/{{ hostname }}/{{ pki_ovpn_certs_path }}{{ ovpn_client_private_key_name }}.csr"
+    dest: "{{ pki_ovpn_certs_path }}{{ ovpn_client_private_key_name }}.csr"
+  delegate_to: server
+
+- name: Generate client certificate signed with my own CA certificate
+  delegate_to: server
+  openssl_certificate:
+    path: "{{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}"
+    csr_path: "{{ pki_ovpn_certs_path }}{{ ovpn_client_private_key_name }}.csr"
+    ownca_path: "{{ pki_CA_certs_path }}{{ CA_cert_name }}"
+    ownca_privatekey_path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    provider: ownca
+    key_usage:
+      - digitalSignature
+    key_usage_strict: true
+    extended_key_usage:
+      - clientAuth
+    extended_key_usage_strict: true
+
+- name: Fetch certificate from server to localhost /tmp
+  fetch:
+    src: "{{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}"
+    dest: /tmp
+  delegate_to: server
+
+- name: Copy certificate from localhost to client
+  copy:
+    src: "/tmp/{{ hostname }}/{{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}"
+    dest: "{{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}"
+
+- name: Remove certificate from localhost /tmp
+  file:
+    path: "/tmp/{{ hostname }}/{{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}"
+    state: absent
+...

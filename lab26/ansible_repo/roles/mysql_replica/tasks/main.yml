@@ -1,0 +1,82 @@
+---
+- name: Provision config from template
+  template:
+    backup: yes
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: replica.cnf.j2, dest: "/etc/my.cnf" }
+  notify: "restart_mysql"
+
+- name: Enable mysql
+  systemd:
+    name: mysqld.service
+    enabled: yes
+
+- meta: flush_handlers
+
+- name: Check for replay (block-file /opt/provision_done_replica exists)
+  stat:
+    path: /opt/provision_done_replica
+  register: provision_done_replica
+
+- name: Get temporary root password from /var/log/mysqld.log
+  command: "awk '/A temporary password/ {print $NF}' /var/log/mysqld.log"
+  register: "temp_root_password"
+  when:
+    - provision_done_replica.stat.exists != True
+
+- name: Copy root .my.cnf file with temporary password credentials.
+  template:
+    src: "root.my.cnf.j2"
+    dest: "{{ mysql_root_home }}/.my.cnf"
+    owner: "{{ mysql_root_username }}"
+    group: "{{ mysql_root_username }}"
+    mode: 0600
+  when:
+    - mysql_user_name != mysql_root_username
+    - provision_done_replica.stat.exists != True
+  vars:
+    password_var: "{{ temp_root_password.stdout }}"
+
+- name: Set root password
+  command: 'mysql --connect-expired-password --batch --execute="{{ item }}"'
+  with_items:
+    - ALTER USER '{{ mysql_root_username }}'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ mysql_root_password }}';
+  when:
+    - provision_done_replica.stat.exists != True
+
+- name: Copy root .my.cnf file with password credentials.
+  template:
+    src: "root.my.cnf.j2"
+    dest: "{{ mysql_root_home }}/.my.cnf"
+    owner: "{{ mysql_root_username }}"
+    group: "{{ mysql_root_username }}"
+    mode: 0600
+  when:
+    - mysql_user_name != mysql_root_username
+    - provision_done_replica.stat.exists != True
+  vars:
+    password_var: "{{ mysql_root_password }}"
+
+- name: Manage database and their users (enable replication)
+  command: 'mysql --batch --execute="{{ item }}"'
+  with_items:
+    - STOP SLAVE
+    - CHANGE MASTER TO MASTER_HOST='{{ master_ip }}', MASTER_USER='{{ mysql_replication_user }}', MASTER_PASSWORD='{{ mysql_replication_user_password }}', MASTER_AUTO_POSITION = 1
+    - START SLAVE
+  when:
+  - provision_done_replica.stat.exists != True
+
+- name: Set replay protection (block-file /opt/provision_done_replica)
+  file:
+    path: /opt/provision_done_replica
+    state: touch
+    owner: root
+    group: root
+    mode: '0744'
+  when:
+    - provision_done_replica.stat.exists != True
+...

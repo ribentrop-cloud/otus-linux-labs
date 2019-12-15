@@ -1,0 +1,16 @@
+events {
+    worker_connections 1024;
+}
+
+# Используем переменные
+
+http {
+    server {
+        listen       {{ nginx_listen_port }} default_server;
+        server_name  default_server;
+        root         /usr/share/nginx/html;
+
+        location / {
+        }
+    }
+}

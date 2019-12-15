@@ -1,0 +1,46 @@
+---
+- name: base (otus-backup homework)
+  hosts: all
+  become: true
+  tags:
+    - base
+
+  roles:
+    - base_config
+
+- name: fd (otus-backup homework)
+  hosts: fd
+  become: true
+  tags:
+    - bacula-file-daemon
+
+  roles:
+    - install_fd
+
+- name: sd (otus-backup homework)
+  hosts: sd
+  become: true
+  tags:
+    - bacula-storage-daemon
+
+  roles:
+    - install_sd
+
+- name: cons (otus-backup homework)
+  hosts: cons
+  become: true
+  tags:
+    - bacula-console
+
+  roles:
+    - install_cons
+
+- name: dir (otus-backup homework)
+  hosts: dir
+  become: true
+  tags:
+    - bacula-director
+
+  roles:
+    - install_dir
+...

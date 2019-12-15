@@ -1,0 +1,5 @@
+---
+#bacula_fd_pass: "\"@@FD_PASSWORD@@\""
+#bacula_fd_name: bclient-fd
+#bacula_fd_port: 9102
+...

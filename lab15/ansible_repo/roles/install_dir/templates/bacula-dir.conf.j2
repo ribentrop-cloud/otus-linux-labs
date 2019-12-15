@@ -1,0 +1,178 @@
+Director {
+  Name = {{ bacula_dir_name }}
+  DIRport = {{ bacula_dir_port }}
+  QueryFile = "/etc/bacula/query.sql"
+  WorkingDirectory = "/var/spool/bacula"
+  PidDirectory = "/var/run"
+  Maximum Concurrent Jobs = 1
+  Password = {{ bacula_dir_password }}
+  Messages = Daemon
+}
+
+Catalog {
+  Name = MyCatalog
+  dbaddress = localhost
+  dbname = {{ bacula_databasename }}
+  dbuser = {{ bacula_dbusername }}
+  dbpassword = {{ bacula_dbpassword }}
+}
+
+Messages {
+  Name = Standard
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: %t %e of %c %l\" %r"        
+  operatorcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula: Intervention needed for %j\" %r"
+  mail = root@localhost = all, !skipped
+  operator = root@localhost = mount
+  console = all, !skipped, !saved
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+  catalog = all
+}
+
+Messages {
+  Name = Daemon
+  mailcommand = "/usr/sbin/bsmtp -h localhost -f \"\(Bacula\) \<%r\>\" -s \"Bacula daemon message\" %r"
+  mail = root@localhost = all, !skipped
+  console = all, !skipped, !saved
+  append = "/var/log/bacula/bacula.log" = all, !skipped
+}
+
+
+Pool {
+  Name = Scratch
+  Pool Type = Backup
+}
+
+Console {
+  Name = {{ bacula_mon_name }}
+  Password = {{ bacula_mon_pass_dir }}
+  CommandACL = status, .status
+}
+
+JobDefs {
+  Name = {{ default_job_name }}
+  Type = Backup
+  Level = Incremental
+  Client = {{ default_job_fd }}
+  FileSet = {{ default_job_fileset_name }}
+  Schedule = {{ default_job_schedule_name }}
+  Storage = {{ bacula_storage_name }}
+  Messages = Standard
+  Pool = File
+  Priority = 10
+  Write Bootstrap = "/var/spool/bacula/%c.bsr"
+}
+
+Pool {
+  Name = File
+  Pool Type = Backup
+  Recycle = yes
+  AutoPrune = yes
+  Volume Retention = 62 days
+  Maximum Volume Bytes = 3G
+  Maximum Volumes = 3
+  LabelFormat = "etc_backup_"
+}
+
+Job {
+  Name = "RestoreFiles"
+  Type = Restore
+  Client = {{ restore_job_fd }}
+  FileSet = {{ default_job_fileset_name }}
+  Storage = {{ bacula_storage_name }}
+  Pool = Default
+  Messages = Standard
+  Where = {{ restore_job_path_where }}
+}
+
+Pool {
+  Name = Default
+  Pool Type = Backup
+  Recycle = yes
+  AutoPrune = yes
+  Volume Retention = 62 days
+}
+
+Job {
+  Name = "Backup-bclient"
+  Level = Base #base job for file deduplication
+  JobDefs = {{ default_job_name }}
+  Schedule = TimeToFull
+}
+
+Job {
+  Name = "Backup-bclient-dedupl"
+  Base = Backup-bclient-dedupl, Backup-bclient #select base jobs for file deduplication
+  JobDefs = {{ default_job_name }}
+  Accurate = yes #enable file deduplication
+  Schedule = TimeToBackup
+}
+
+FileSet {
+  Name = {{ default_job_fileset_name }}
+  Enable VSS = yes
+  Include {
+    Options {
+      compression = GZIP9 #enable compression
+      signature = SHA1 #enable checksum
+      # option description look here:
+      # https://www.bacula.org/5.2.x-manuals/en/main/main/Configuring_Director.html#SECTION001470000000000000000
+      BaseJob  = pmugcs5 # used when running a Backup Level=Full with BaseJobs
+      accurate = mcs # used when running a Backup Level=Incremental/Differential in Accurate mode (deduplication)
+      verify = pin5 # used when running a Verify Level=Catalog as well as the DiskToCatalog level job
+    }
+    File = /etc
+  }
+  Exclude {
+  }
+}
+
+Schedule {
+  Name = {{ default_job_schedule_name }}
+  Run = Full sun-sat at 0:00
+  Run = Differential hourly at 0:00
+  Run = Differential hourly at 0:10
+  Run = Differential hourly at 0:20
+  Run = Differential hourly at 0:30
+  Run = Differential hourly at 0:40
+  Run = Differential hourly at 0:50
+  Run = Incremental hourly at 0:00
+  Run = Incremental hourly at 0:30
+}
+
+Schedule {
+  Name = TimeToFull
+  Run = Full sun-sat at 0:00
+}
+
+Schedule {
+  Name = TimeToBackup
+  Run = Differential hourly at 0:00
+  Run = Differential hourly at 0:10
+  Run = Differential hourly at 0:20
+  Run = Differential hourly at 0:30
+  Run = Differential hourly at 0:40
+  Run = Differential hourly at 0:50
+  Run = Incremental hourly at 0:00
+  Run = Incremental hourly at 0:30
+}
+
+Client {
+  Name = {{ bacula_fd_name }}
+  Address = {{ bclient_hostname }}.{{ domain }}
+  FDPort = {{ bacula_fd_port }}
+  Catalog = {{ bacula_catalog_name }}
+  Password = {{ bacula_fd_pass }}
+  File Retention = 30 days
+  Job Retention = 6 months
+  AutoPrune = yes
+}
+
+Storage {
+  Name = {{ bacula_storage_name }}
+  Address = {{ bserver_hostname }}.{{ domain }}
+  SDPort = {{ bacula_sd_port }}
+  Password = {{ bacula_sd_pass }}
+  Device = {{ bacula_sd_devicename }}
+  Media Type = File
+}
+

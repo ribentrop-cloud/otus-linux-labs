@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: install bacula storage daemon
+  min_ansible_version: 2.4
+  galaxy_tags: [bacula]
+
+dependencies: [base_config]
+...

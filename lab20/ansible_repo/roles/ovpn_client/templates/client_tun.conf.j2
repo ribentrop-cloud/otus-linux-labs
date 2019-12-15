@@ -1,0 +1,12 @@
+client
+dev tun1
+proto tcp
+remote 192.168.50.10 1194
+resolv-retry infinite
+nobind
+persist-tun
+verb 3
+mute 20
+ca {{ pki_CA_certs_path }}{{ CA_cert_name }}
+cert {{ pki_ovpn_certs_path }}{{ ovpn_client_cert_name }}
+key {{ pki_ovpn_private_path }}{{ ovpn_client_private_key_name }}

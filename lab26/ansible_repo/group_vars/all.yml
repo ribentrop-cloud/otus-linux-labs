@@ -1,0 +1,19 @@
+---
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+domain: mydomain.test
+master_ip: 192.168.11.160
+master_hostname: master
+replica_ip: 192.168.11.161
+replica_hostname: replica
+db_name: bet
+db_dmp_name: bet.dmp
+path_to_dumpfile: /vagrant
+mysql_user_name: vagrant
+mysql_user_password: Vagrant123@
+mysql_user_home: /home/vagrant
+mysql_root_username: root
+mysql_root_password: Root123@
+mysql_root_home: /root
+mysql_replication_user: repl
+mysql_replication_user_password: Repl123@
+...

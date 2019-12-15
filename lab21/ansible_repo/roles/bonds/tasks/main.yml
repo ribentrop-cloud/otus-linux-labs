@@ -1,0 +1,144 @@
+---
+- name: Install selinux utilities
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - libsemanage-python
+    - policycoreutils-python
+
+- name: Sysctl tweaking 
+  sysctl:
+    name: "{{ item }}"
+    value: "1"
+    sysctl_set: yes
+    state: present
+    reload: yes
+  with_items:
+    - "net.ipv6.conf.all.disable_ipv6"
+    - "net.ipv6.conf.default.disable_ipv6"
+    - "net.ipv4.conf.all.forwarding"
+
+- name: Stop and disable NetworkManager
+  when: ansible_facts['hostname'] == "centralRouter"
+  systemd:
+    name: NetworkManager
+    state: stopped
+    enabled: no
+
+- name: configuring ifcfg-eth0 - no DefRoute
+  when: ansible_facts['hostname'] == "centralRouter"
+  replace:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    regexp: '^DEFROUTE.*=.*'
+    replace: "DEFROUTE=\"no\""
+
+- name: configuring ifcfg-eth0 - no DefRoute
+  when: ansible_facts['hostname'] == "centralRouter"
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    line: "DEFROUTE=\"no\""
+    state: present
+
+- name: configuring ifcfg-eth0 - no ZeroConf
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    line: "NOZEROCONF=\"yes\""
+    state: present
+
+- name: ifcfg provision from template - bonding
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: ifcfg-eth-bond-base1.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ bond_config_device_1 }}" }
+    - { src: ifcfg-eth-bond-base2.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ bond_config_device_2 }}" }
+    - { src: ifcfg-eth-bond.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ bond_device }}" }
+
+- name: configuring ifcfg-{{ bond_config_device_1 }} - add hwaddr
+  with_items:
+    - "ansible_{{ bond_config_device_1 }}"
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ bond_config_device_1 }}"
+    line: "HWADDR={{ hostvars[inventory_hostname][item]['macaddress'] }}"
+    state: present
+
+- name: configuring ifcfg-{{ bond_config_device_2 }} - add hwaddr
+  with_items:
+    - "ansible_{{ bond_config_device_2 }}"
+  lineinfile:
+    path: "/etc/sysconfig/network-scripts/ifcfg-{{ bond_config_device_2 }}"
+    line: "HWADDR={{ hostvars[inventory_hostname][item]['macaddress'] }}"
+    state: present
+
+- name: provision from template - ifcfg
+  when: ansible_facts['hostname'] == "centralRouter"
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: ifcfg-eth-base1.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_1 }}" }
+    - { src: ifcfg-eth-base2.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_2 }}" }
+    - { src: ifcfg-eth-base3.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_3 }}" }
+    - { src: ifcfg-eth-base4.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_4 }}" }
+    - { src: centralRouter/ifcfg-eth-3-alias-1.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_3 }}:{{ config_device_3_alias_1 }}" }
+    - { src: centralRouter/ifcfg-eth-4-alias-1.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ config_device_4 }}:{{ config_device_4_alias_1 }}" }
+
+- name: provision from template - route
+  when: ansible_facts['hostname'] == "centralRouter"
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: centralRouter/route-bond.j2, dest: "/etc/sysconfig/network-scripts/route-{{ bond_device }}" }
+    - { src: centralRouter/route-eth1.j2, dest: "/etc/sysconfig/network-scripts/route-{{ config_device_1 }}" }
+    - { src: centralRouter/route-eth3.j2, dest: "/etc/sysconfig/network-scripts/route-{{ config_device_3 }}" }
+    - { src: centralRouter/route-eth4.j2, dest: "/etc/sysconfig/network-scripts/route-{{ config_device_4 }}" }
+
+- name: provision from template - route
+  when: ansible_facts['hostname'] == "inetRouter"
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: inetRouter/route-bond.j2, dest: "/etc/sysconfig/network-scripts/route-{{ bond_device }}" }
+
+# после отключения network manager нужно прибить процесс dhclient,
+# иначе при перезапуске сети будет вываливаться ошибка,
+# связанная с тем, что dhclient уже запущен
+- name: restart network - get PID of dhclient
+  when: ansible_facts['hostname'] == "centralRouter"
+  shell: "ps -ef | grep -v grep | grep -w dhclient | awk '{print $2}'"
+  register: running_process
+
+- name: restart network - Kill dhclient
+  when: ansible_facts['hostname'] == "centralRouter"
+  shell: "kill {{ item }}"
+  with_items: "{{ running_process.stdout_lines }}"
+  ignore_errors: yes
+
+- name: restart network
+  when: ansible_facts['hostname'] == "centralRouter"
+  systemd:
+    name: network
+    state: restarted
+
+- name: restart network
+  when: ansible_facts['hostname'] == "inetRouter"
+  service:
+    name: network
+    state: restarted
+...

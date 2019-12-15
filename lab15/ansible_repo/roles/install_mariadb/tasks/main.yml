@@ -1,0 +1,13 @@
+---
+- name: mariadb install
+  yum:
+    name: mariadb-server
+    state: present
+
+- name: mariadb enabled in systemd
+  systemd:
+    name: mariadb
+    enabled: true
+    state: started
+  notify: restart_mariadb
+...

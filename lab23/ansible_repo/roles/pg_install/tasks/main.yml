@@ -1,0 +1,27 @@
+---
+- name: install pg repo
+  yum:
+    name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+    update_cache: yes
+    state: present
+
+- name: install packages
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - postgresql11-server
+    - postgresql11-contrib
+
+- name: init database
+  command: /usr/pgsql-11/bin/postgresql-11-setup initdb
+  args:
+    creates: "{{ pg_data_path }}/postgresql.conf"
+
+- name: enable and start pg server
+  systemd:
+    name: postgresql-11.service
+    state: started
+    enabled: yes
+...

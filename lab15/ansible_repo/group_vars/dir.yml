@@ -1,0 +1,16 @@
+---
+bacula_dir_port: 9101
+bacula_dir_password: "\"@@DIR_PASSWORD@@\""
+default_job_name: "\"DefaultJob\""
+default_job_fd: bclient-fd
+default_job_fileset_name: "\"OTUS File set\""
+default_job_schedule_name: "\"OTUS Schedule\""
+restore_job_fd: bclient-fd
+restore_job_path_where: /tmp/bacula-restores
+bacula_catalog_name: MyCatalog
+bacula_storage_name: Storage1
+bacula_databasename: bacula
+bacula_dbusername: bacula
+mysql_bacula_dbpassword: bacula_db_password
+bacula_dbpassword: "\"bacula_db_password\""
+...

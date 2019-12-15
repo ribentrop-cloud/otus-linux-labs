@@ -1,0 +1,36 @@
+---
+- name: install epel-release
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - epel-release
+
+- name: install ocserv
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ocserv
+
+- name: generate DH
+  openssl_dhparam:
+    path: "{{ ocserv_server_config_path }}{{ ocserv_DH_filename }}"
+    size: "{{ ocserv_DH_size }}"
+
+- name: install configs from template
+  template:
+    backup: true
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: ocserv.conf.j2, dest: "{{ ocserv_server_config_path }}ocserv.conf" }
+
+- name: enable and start ocserv
+  systemd:
+    name: ocserv
+    enabled: true
+  notify: restart_ocserv
+...

@@ -1,0 +1,89 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+MACHINES = {
+  :vm1 => {
+    :box_name => "centos/7",
+    :net => [
+      {adapter: 2, :device => "eth1", ip: '192.168.11.126', netmask: "255.255.255.0", default_router: "192.168.11.1"},
+      {adapter: 3, :device => "eth2", virtualbox__intnet: "interconnect", auto_config: false},
+    ]
+  },
+  :vm2 => {
+    :box_name => "centos/7",
+    :net => [
+      {adapter: 2, :device => "eth1", ip: '192.168.11.127', netmask: "255.255.255.0", default_router: "192.168.11.1"},
+      {adapter: 3, :device => "eth2", virtualbox__intnet: "interconnect", auto_config: false},
+    ]
+  },
+  :vm3 => {
+    :box_name => "centos/7",
+    :net => [
+      {adapter: 2, :device => "eth1", ip: '192.168.11.128', netmask: "255.255.255.0", default_router: "192.168.11.1"},
+      {adapter: 3, :device => "eth2", virtualbox__intnet: "interconnect", auto_config: false},
+    ]
+  },
+}
+
+Vagrant.configure("2") do |config|
+
+config.trigger.before :up do |trigger|
+    trigger.info = "Pre-up trigger..."
+    trigger.run = {path: "./provision_service/keygen.sh"}
+end
+
+  MACHINES.each do |boxname, boxconfig|
+
+    config.vm.define boxname do |box|
+
+        box.vm.box = boxconfig[:box_name]
+        box.vm.host_name = boxname.to_s
+        boxconfig[:net].each do |ipconf|
+          box.vm.network "private_network", ipconf
+          end
+
+        box.vm.provider :virtualbox do |vb|
+          vb.customize ["modifyvm", :id, "--memory", "384"]
+          vb.customize ["modifyvm", :id, "--cpus", "1"]
+          vb.name = boxname.to_s
+          end
+        
+        if boxconfig.key?(:public)
+          box.vm.network "public_network", boxconfig[:public]
+          end
+
+        box.vm.provision "shell", inline: <<-SHELL
+          mkdir -p ~root/.ssh
+          cp ~vagrant/.ssh/auth* ~root/.ssh
+          cat /vagrant/id_rsa.pub | awk '{print $1,$2}' >> /root/.ssh/authorized_keys
+          ip route delete default 2>&1 >/dev/null || true
+          SHELL
+        
+        case boxname.to_s
+        when "vm1"
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            #cat /vagrant/id_rsa.pub | awk '{print $1,$2}' >> /root/.ssh/authorized_keys
+            #ip route delete default 2>&1 >/dev/null || true
+            SHELL
+
+        when "vm2"
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            #cat /vagrant/id_rsa.pub | awk '{print $1,$2}' >> /root/.ssh/authorized_keys
+            #ip route delete default 2>&1 >/dev/null || true
+            SHELL
+
+        when "vm3"
+          box.vm.provision "shell", run: "always", inline: <<-SHELL
+            #cat /vagrant/id_rsa.pub | awk '{print $1,$2}' >> /root/.ssh/authorized_keys
+            #ip route delete default 2>&1 >/dev/null || true
+            SHELL
+        end
+    end
+  end
+
+config.vm.provision "ansible" do |ansible|
+  ansible.playbook = "./ansible_repo/startall.yml"
+  ansible.inventory_path = "./ansible_repo/inventory_dev/hosts.yml"
+end
+
+end

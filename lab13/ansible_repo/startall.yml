@@ -1,0 +1,64 @@
+---
+- name: nginx (otus-log homework)
+  hosts: webservers
+  become: true
+  tags:
+    - nginx
+
+  roles:
+    - install_nginx
+
+- name: elk (otus-log homework)
+  hosts: elk
+  become: true
+  tags:
+    - elk
+
+  roles:
+    - install_elk
+
+- name: auditd_server (otus-log homework)
+  hosts: log
+  become: true
+  tags:
+    - auditd
+
+  roles:
+    - auditd_server
+
+- name: log_server (otus-log homework)
+  hosts: log
+  become: true
+  tags:
+    - log
+
+  roles:
+    - sd_jd_server
+
+- name: auditd_client (otus-log homework)
+  hosts: webservers
+  become: true
+  tags:
+    - auditd
+
+  roles:
+    - auditd_client
+
+- name: log_client (otus-log homework)
+  hosts: webservers
+  become: true
+  tags:
+    - log
+
+  roles:
+    - sd_jd_client
+
+#- name: filebeat (otus-log homework)
+#  hosts: web
+#  become: true
+#  tags:
+#    - elk
+#
+#  roles:
+#    - install_filebeat
+...

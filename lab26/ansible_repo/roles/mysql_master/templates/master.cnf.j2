@@ -1,0 +1,19 @@
+[mysqld]
+pid-file=/var/run/mysqld/mysqld.pid
+log-error=/var/log/mysqld.log
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+
+server-id = {{ server_id }}
+default_authentication_plugin = mysql_native_password
+skip-name-resolve
+innodb_file_per_table = 1
+log-bin = mysql-bin
+expire-logs-days = 7
+max-binlog-size = 16M
+binlog-format = "MIXED"
+binlog_do_db = {{ db_name }}
+
+log-slave-updates = On
+gtid-mode = On
+enforce-gtid-consistency = On

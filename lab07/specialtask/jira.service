@@ -1,0 +1,27 @@
+[Unit]
+Description=Jira Server (jira.service by mbfx)
+After=network.target nginx.service postgresql.service
+Wants=jira-pre.service
+
+[Service]
+Type=simple
+User=jira
+Group=jira
+EnvironmentFile=/etc/sysconfig/jiraenv
+PIDFile=/opt/atlassian/jira/work/catalina.pid
+ExecStartPre=/usr/bin/sleep 5
+ExecStart=/opt/atlassian/jira/jre/bin/java      $JIRASYSD_LOGGING_CONFIG $JIRASYSD_LOGGING_MANAGER \
+                                                $JIRASYSD_JAVA_OPTS $JIRASYSD_CATALINA_OPTS \
+                                                $JIRASYSD_CATALINA_BASE $JIRASYSD_CATALINA_HOME \
+                                                $JIRASYSD_CATALINA_TMPDIR $JIRASYSD_ENDORSED_PROP \
+                                                $JIRASYSD_CLASSPATH $JIRASYSD_BOOTSTRAP start
+ExecStop=/opt/atlassian/jira/jre//bin/java     $JIRASYSD_LOGGING_CONFIG $JIRASYSD_LOGGING_MANAGER \
+                                                $JIRASYSD_JAVA_OPTS $JIRASYSD_CATALINA_OPTS \
+                                                $JIRASYSD_CATALINA_BASE $JIRASYSD_CATALINA_HOME \
+                                                $JIRASYSD_CATALINA_TMPDIR $JIRASYSD_ENDORSED_PROP \
+                                                $JIRASYSD_CLASSPATH $JIRASYSD_BOOTSTRAP stop
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,12 @@
+---
+- name: "restart_postgresql_master"
+  systemd:
+    name: postgresql-11.service
+    state: restarted
+
+- name: "restart_postgresql_replica"
+  systemd:
+    name: postgresql-11.service
+    state: restarted
+  delegate_to: "{{ replica_hostname }}"
+...

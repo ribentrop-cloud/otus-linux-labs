@@ -1,0 +1,60 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+home = ENV['HOME']
+
+MACHINES = {
+  :freeipa => {
+        :box_name => "centos/7",
+        :ip_addr => '192.168.11.117',
+  },
+  :client => {
+        :box_name => "centos/7",
+        :ip_addr => '192.168.11.118',
+  },
+}
+
+Vagrant.configure("2") do |config|
+      # Триггер для генерации ключей перед UP
+	config.trigger.before :up do |trigger|
+            trigger.info = "Preup trigger - generating keys..."
+            trigger.run = {path: "keygen.sh"}
+      end
+
+      MACHINES.each do |boxname, boxconfig|
+      	config.vm.define boxname do |box|
+
+                  box.vm.box = boxconfig[:box_name]
+                 	box.vm.host_name = boxname.to_s
+
+                  box.vm.network "private_network", ip: boxconfig[:ip_addr]
+
+      	  	case boxname.to_s
+                        when "freeipa"
+                              box.vm.provider :virtualbox do |vb|
+                                    vb.customize ["modifyvm", :id, "--memory", "2048"]
+                                    vb.customize ["modifyvm", :id, "--cpus", "3"]
+                                    vb.name = boxname.to_s
+                        end    
+                        when "client"
+                              box.vm.provider :virtualbox do |vb|
+                                    vb.customize ["modifyvm", :id, "--memory", "256"]
+                                    vb.customize ["modifyvm", :id, "--cpus", "1"]
+                                    vb.name = boxname.to_s
+                        end
+                  end
+            end
+      end
+      # Добавление ключей vagrant в авторизованные
+      config.vm.provision "shell", path: "provision.sh"
+      # Развёртываем FreeIPA server и client. Комментарии в playbook.
+      config.vm.provision "ansible" do |ansible|
+            ansible.playbook = "ansible_repo/startall.yml"
+            ansible.inventory_path = "ansible_repo/inventory_dev/hosts.yml"
+      end
+      # Триггер для добавления ключей и настройки сети после UP
+      config.trigger.after :up do |trigger|
+            trigger.info = "Postup trigger - routes and keys..."
+            trigger.run = {path: "up_local_trigger.sh"}
+            trigger.run_remote = {path: "up_remote_trigger.sh"}
+      end
+end

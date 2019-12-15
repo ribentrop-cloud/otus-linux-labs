@@ -1,0 +1,7 @@
+---
+hostname: client
+ovpn_country_name: RU
+ovpn_org_name: mbfx
+ovpn_email_addr: mbfx@mail.ru
+ovpn_client_common_name: client
+...

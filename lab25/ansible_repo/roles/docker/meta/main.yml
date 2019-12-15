@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: docker install
+  min_ansible_version: 2.4
+  galaxy_tags: [docker, docker-compose]
+
+dependencies: [base_config]
+...

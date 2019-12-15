@@ -1,0 +1,258 @@
+---
+- name: Create directory for ssh on {{ master_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh"
+    state: directory
+    owner: postgres
+    group: postgres
+
+- name: Create directory for ssh on {{ replica_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh"
+    state: directory
+    owner: postgres
+    group: postgres
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Create {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+    state: touch
+
+- name: Create {{ pg_path }}/.ssh/known_hosts on {{ replica_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+    state: touch
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Generate SSH keypair for ssh on {{ master_hostname }}
+  openssh_keypair:
+    path: "{{ pg_path }}/.ssh/id_rsa"
+    type: rsa
+    owner: postgres
+    group: postgres
+    mode: '0600'
+
+- name: Generate SSH keypair for ssh on {{ replica_hostname }}
+  openssh_keypair:
+    path: "{{ pg_path }}/.ssh/id_rsa"
+    type: rsa
+    owner: postgres
+    group: postgres
+    mode: '0600'
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Take data from keyfile for ssh on {{ master_hostname }} ...
+  command: "cat {{ pg_path }}/.ssh/id_rsa.pub"
+  register: data_keyfile_1
+
+- name: ... and set authorized key taken from file on {{ master_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_1.stdout }}"
+
+- name: Take data from keyfile for ssh on {{ replica_hostname }} ...
+  command: "cat {{ pg_path }}/.ssh/id_rsa.pub"
+  register: data_keyfile_2
+  delegate_to: "{{ replica_hostname }}"
+
+- name: ... and set authorized key taken from file on {{ replica_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_2.stdout }}"
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Set authorized key taken from file from {{ master_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_1.stdout }}"
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Set authorized key taken from file from {{ replica_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_2.stdout }}"
+
+- name: Accept SSH fingerprints from {{ replica_hostname }}.{{ domain }}
+  command: "ssh-keyscan -H {{ replica_hostname }}.{{ domain }}"
+  register: server2_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server2_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ replica_hostname }}
+  command: "ssh-keyscan -H {{ replica_hostname }}"
+  register: server2_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server2_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ replica_ip }}
+  command: "ssh-keyscan -H {{ replica_ip }}"
+  register: server2_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server2_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ master_hostname }}.{{ domain }} on {{ replica_hostname }}
+  command: "ssh-keyscan -H {{ master_hostname }}.{{ domain }}"
+  register: server1_kh
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ replica_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server1_kh.stdout }}"
+    state: present
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }} on {{ replica_hostname }}
+  command: "ssh-keyscan -H {{ master_hostname }}"
+  register: server1_kh
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ replica_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server1_kh.stdout }}"
+    state: present
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_ip }} on {{ replica_hostname }}
+  command: "ssh-keyscan -H {{ master_ip }}"
+  register: server1_kh
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ replica_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server1_kh.stdout }}"
+    state: present
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Configuring {{ pg_data_path }}/pg_hba.conf on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_data_path }}/pg_hba.conf"
+    line: "host replication all {{ replica_ip }}/32 trust"
+    state: present
+  notify: restart_postgresql_master
+
+- name: Provision {{ pg_data_path }}/postgresql.conf to master from template
+  template:
+    owner: postgres
+    group: postgres
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: postgresql-master.conf.j2, dest: "{{ pg_data_path }}/postgresql.conf" }
+  notify: restart_postgresql_master
+
+- name: Check streaming user
+  become_user: postgres
+  command: psql postgres -tAc "SELECT 1 from pg_roles where rolname='{{ streaming_username }}'"
+  register: streaming_user_exists
+
+- name: Create streaming user
+  become_user: postgres
+  when: streaming_user_exists.stdout != "1"
+  command: psql postgres -c "CREATE USER {{ streaming_username }} WITH REPLICATION PASSWORD '{{ streaming_password }}'"
+
+- name: Check replication slot
+  become_user: postgres
+  command: psql postgres -tAc "SELECT 1 from pg_replication_slots  where slot_name='{{ replication_slot }}'"
+  register: replication_slot_exists
+
+- name: Create replication slot
+  become_user: postgres
+  when: replication_slot_exists.stdout != "1"
+  command: psql postgres -c "SELECT * FROM pg_create_physical_replication_slot('{{ replication_slot }}');"
+
+- name: Restart postgresql on {{ master_hostname }}
+  systemd:
+    name: postgresql-11.service
+    state: restarted
+
+- name: Stop postgresql on {{ replica_hostname }}
+  systemd:
+    name: postgresql-11.service
+    state: stopped
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Clear exist pgdata on {{ replica_hostname }}
+  file:
+    path: "{{ pg_data_path }}"
+    state: absent
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Create empty pgdata on {{ replica_hostname }}
+  file:
+    path: "{{ pg_data_path }}"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0700'
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Copy base from {{ master_hostname }} to {{ replica_hostname }}
+  command: "pg_basebackup -X stream -h {{ master_hostname }}.{{ domain }} -D {{ pg_data_path }}/ -P -U {{ streaming_username }}"
+  become: yes
+  become_user: postgres
+  delegate_to: "{{ replica_hostname }}"
+  notify: restart_postgresql_replica
+
+- name: Provision {{ pg_data_path }}/recovery.conf to replica from template
+  template:
+    owner: postgres
+    group: postgres
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: postgresql-replica.conf.j2, dest: "{{ pg_data_path }}/postgresql.conf" }
+    - { src: recovery.conf.j2, dest: "{{ pg_data_path }}/recovery.conf" }
+  notify: restart_postgresql_replica
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Configuring {{ pg_data_path }}/pg_hba.conf on {{ replica_hostname }}
+  lineinfile:
+    path: "{{ pg_data_path }}/pg_hba.conf"
+    line: "host replication all {{ master_ip }}/32 trust"
+    state: present
+  delegate_to: "{{ replica_hostname }}"
+  notify: restart_postgresql_replica
+
+- name: Create empty archive directory on {{ master_hostname }}
+  file:
+    path: "{{ pg_path }}/archive"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0770'
+
+- name: Create empty archive directory on {{ replica_hostname }}
+  file:
+    path: "{{ pg_path }}/archive"
+    state: directory
+    owner: postgres
+    group: postgres
+    mode: '0770'
+  delegate_to: "{{ replica_hostname }}"
+...

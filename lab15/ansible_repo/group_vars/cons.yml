@@ -1,0 +1,3 @@
+---
+bacula_dir_password: "\"@@DIR_PASSWORD@@\""
+...

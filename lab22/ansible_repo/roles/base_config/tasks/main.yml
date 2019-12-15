@@ -1,0 +1,71 @@
+---
+- name: install epel-release
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - epel-release
+
+- name: install packages
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - python2-cryptography
+
+- name: set timezone # Задаём часовой пояс.
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: enable ntpd
+  systemd:
+    name: ntpd
+    enabled: true
+  notify: restart_ntpd
+
+# Всякая магия, чтобы заставить виртуалки после развертывания не пользоваться NAT Vagrant
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth0 (step 1)
+  replace:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    regexp: '^DEFROUTE.*=.*'
+    replace: "DEFROUTE=no"
+  notify: restart_network
+
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth0 (step 2)
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth0
+    line: "DEFROUTE=no"
+    state: present
+  notify: restart_network
+
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth1 (step 1)
+  replace:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    regexp: '^DEFROUTE.*=.*'
+    replace: "DEFROUTE=yes"
+  notify: restart_network
+
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth1 (step 2)
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    line: "DEFROUTE=yes"
+    state: present
+  notify: restart_network
+
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth1 (step 3)
+  replace:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    regexp: '^GATEWAY.*=.*'
+    replace: "GATEWAY=192.168.11.1"
+  notify: restart_network
+
+- name: configuring /etc/sysconfig/network-scripts/ifcfg-eth1 (step 4)
+  lineinfile:
+    path: /etc/sysconfig/network-scripts/ifcfg-eth1
+    line: "GATEWAY=192.168.11.1"
+    state: present
+  notify: restart_network
+...

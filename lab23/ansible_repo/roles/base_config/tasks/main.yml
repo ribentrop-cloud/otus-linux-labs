@@ -1,0 +1,52 @@
+---
+- name: Install epel-release
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - epel-release
+
+- name: Install packages
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - python2-cryptography
+
+- name: Set timezone
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: Enable ntpd
+  systemd:
+    name: ntpd
+    enabled: true
+    state: restarted
+
+- name: "Add my own IP to /etc/hosts instead localhost"
+  replace:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1(\s+){{ ansible_hostname }}(\s+){{ ansible_hostname }}.*'
+    replace: "{{ ansible_host }} {{ ansible_hostname }}.{{ domain }} {{ ansible_hostname }}"
+
+- name: "Add {{ master_hostname }}.{{ domain }} IP to /etc/hosts"
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ master_ip }} {{ master_hostname }}.{{ domain }} {{ master_hostname }}"
+    state: present
+
+- name: "Add {{ replica_hostname }}.{{ domain }} IP to /etc/hosts"
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ replica_ip }} {{ replica_hostname }}.{{ domain }} {{ replica_hostname }}"
+    state: present
+
+- name: "Add {{ backup_hostname }}.{{ domain }} IP to /etc/hosts"
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ backup_ip }} {{ backup_hostname }}.{{ domain }} {{ backup_hostname }}"
+    state: present
+...

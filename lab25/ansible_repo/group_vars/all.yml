@@ -1,0 +1,7 @@
+---
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+domain: mydomain.test
+webhost_hostname: webhost
+webhost_ip: 192.168.11.175
+db_password: some_password
+...

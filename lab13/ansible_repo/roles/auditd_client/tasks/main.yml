@@ -1,0 +1,39 @@
+---
+- name: audispd-plugins install # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - audispd-plugins
+
+- name: configuring /etc/audisp/au-remote.conf #Включаем передачу данных на удаленный сервер
+  replace:
+    path: /etc/audisp/plugins.d/au-remote.conf
+    regexp: 'active = no'
+    replace: "active = yes"
+
+- name: configuring /etc/audisp/audisp-remote.conf # Указываем сервер, куда слать данные
+  replace:
+    path: /etc/audisp/audisp-remote.conf
+    regexp: '^remote_server = *$'
+    replace: "remote_server = {{ log_hostname }}.{{ domain }}"
+
+- name: configuring /etc/audit/auditd.conf # Локально ничего не пишем
+  replace:
+    path: /etc/audit/auditd.conf
+    regexp: 'write_logs = yes'
+    replace: "write_logs = no"
+
+- name: create /etc/audit/rules.d/nginx.rules # Создадим файл правил для nginx
+  file:
+    path: /etc/audit/rules.d/nginx.rules
+    state: touch
+
+- name: insert rule to /etc/audit/rules.d/nginx.rules # Будем отслеживать изменения в каталоге /etc/nginx/
+  lineinfile:
+    path: /etc/audit/rules.d/nginx.rules
+    line: '-w /etc/nginx/ -p wa -k ngnix-config-modified'
+    state: present
+  notify: restart_auditd
+...

@@ -1,0 +1,29 @@
+---
+- name: bacula-sd install
+  yum:
+    name: bacula-storage
+    state: present
+
+- name: bacula-sd enabled in systemd
+  systemd:
+    name: bacula-sd
+    enabled: true
+
+- name: create {{ file_storage_path }} and permissions
+  file:
+    path: "{{ file_storage_path }}"
+    state: directory
+    owner: bacula
+    group: bacula
+
+- name: bacula-sd provision from template
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: bacula-sd.conf.j2, dest: "/etc/bacula/bacula-sd.conf" }
+  notify: restart_bacula_sd
+...

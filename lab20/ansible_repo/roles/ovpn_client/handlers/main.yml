@@ -1,0 +1,11 @@
+---
+- name: restart_openvpn-client@client_tun
+  systemd:
+    name: openvpn-client@client_tun
+    state: restarted
+
+- name: restart_openvpn-client@client_tap
+  systemd:
+    name: openvpn-client@client_tap
+    state: restarted
+...

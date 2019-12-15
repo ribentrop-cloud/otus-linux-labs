@@ -1,0 +1,293 @@
+Script started on Tue 14 May 2019 10:35:28 AM UTC
+]0;root@lab3lvm:/home/vagrant[?1034h[root@lab3lvm vagrant]# 
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblk
+NAME                              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                 8:0    0   40G  0 disk 
+├─sda1                              8:1    0    1M  0 part 
+├─sda2                              8:2    0    1G  0 part /boot
+└─sda3                              8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00           253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01           253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol02Home       253:2    0    4G  0 lvm  /home
+sdb                                 8:16   0   10G  0 disk 
+sdc                                 8:32   0    2G  0 disk 
+sdd                                 8:48   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_0 253:4    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+sde                                 8:64   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_1 253:6    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lvcreate -L 1G -n LogVol04ext4 /dev/VolGroup00
+  Logical volume "LogVol04ext4" created.
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mkfs.ext4 /dev/VolGroup00/LogVol04ext4
+mke2fs 1.42.9 (28-Dec-2013)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+Stride=0 blocks, Stripe width=0 blocks
+65536 inodes, 262144 blocks
+13107 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=268435456
+8 block groups
+32768 blocks per group, 32768 fragments per group
+8192 inodes per group
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376
+
+Allocating group tables: 0/8   done                            
+Writing inode tables: 0/8   done                            
+Creating journal (8192 blocks): done
+Writing superblocks and filesystem accounting information: 0/8   done
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mkdir /mnt/vg00vl04_ext4
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# echo "[K'UUID='`blkd[Kid /dev/VolGroup00/LogVol[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[1P[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C04ext4 -s UUID -o value
+afd66927-2f2f-492d-97ee-def1ffb70f70
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# echo 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt.vg00vl04_ext4 ext4 de faults 0 0' >> /etc/fstab
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# cat /etc/fstab
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+UUID=51f48e25-4911-4d16-97f5-606a44e5b133 /home           xfs    defaults        0 0
+UUID=205c2d41-7629-4154-a43f-5ee56355cd26 /var           xfs    defaults        0 0
+
+UUID=afd66927-2f2f-492d-97ee-def1ffb70f70 /mnt.vg00vl04_ext4 ext4 defaults 0 0
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# moutn -a
+bash: moutn: command not found
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# moutn -a[1P -a[1P -an -at -a
+mount: mount point /mnt.vg00vl04_ext4 does not exist
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# sed -i \[K'' /etc/fstab[C[1@v[1@g[1@/[C[C[1@0[1@0[1@v[1@l[1@0[1@4[1@/[1@d
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# sed -i '/vg00vl04/d' /etc/fstab[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount -a[Ktn[C[C[Ccat /etc/fstab
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+UUID=51f48e25-4911-4d16-97f5-606a44e5b133 /home           xfs    defaults        0 0
+UUID=205c2d41-7629-4154-a43f-5ee56355cd26 /var           xfs    defaults        0 0
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# cat /etc/fstab[17@sed -i '/vg00vl04/d'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount -a[Ktn[C[C[Ccat /etc/fstabecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt.vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cvg00vl04_ext4 ext4 defa[1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C/vg00vl04_ext4 ext4 def[1@a[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mount -a
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblk
+NAME                              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                 8:0    0   40G  0 disk 
+├─sda1                              8:1    0    1M  0 part 
+├─sda2                              8:2    0    1G  0 part /boot
+└─sda3                              8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00           253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01           253:1    0  1.5G  0 lvm  [SWAP]
+  ├─VolGroup00-LogVol02Home       253:2    0    4G  0 lvm  /home
+  └─VolGroup00-LogVol04ext4       253:8    0    1G  0 lvm  /mnt/vg00vl04_ext4
+sdb                                 8:16   0   10G  0 disk 
+sdc                                 8:32   0    2G  0 disk 
+sdd                                 8:48   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_0 253:4    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+sde                                 8:64   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_1 253:6    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# ls /mnt/vg00vl04_ext4/
+[0m[01;34mlost+found[0m
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# touch /mnt/vg00vl04_ext4/test1ctest1rtest1etest1atest1[Ctest1etest1
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/
+createtest1  [0m[01;34mlost+found[0m
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# ls /mnt/vg00vl04_ext4/touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/blk[Kmount -aecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt/vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[Acat /etc/fstab[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[17@sed -i '/vg00vl04/d'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount -a[Ktn[C[C[Ccat /etc/fstabecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt.vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[A[42Pblkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[27Pmkdir /mnt/vg00vl04_ext4fs.ext4 /dev/VolGroup00/LogVol04ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Clvcreate -L 1G -n LogVol04ext4 /dev/VolGroup00[C[C[1P[1@5
+WARNING: ext4 signature detected on /dev/VolGroup00/LogVol05ext4 at offset 1080. Wipe it? [y/n]: y
+  Wiping ext4 signature on /dev/VolGroup00/LogVol05ext4.
+  Logical volume "LogVol05ext4" created.
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lvcreate -L 1G -n LogVol05ext4 /dev/VolGroup00[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Ps /mnt/vg00vl04_ext4/touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/blk[Kmount -aecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt/vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[Acat /etc/fstab[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[17@sed -i '/vg00vl04/d'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount -a[Ktn[C[C[Ccat /etc/fstabecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt.vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[A[42Pblkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[27Pmkdir /mnt/vg00vl04_ext4fs.ext4 /dev/VolGroup00/LogVol04ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Clvcreate -L 1G -n LogVol04ext4 /dev/VolGroup00[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[8Pmkfs.ext4 /dev/VolGroup00/LogVol04ext4[1Pext45ext4
+mke2fs 1.42.9 (28-Dec-2013)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+Stride=0 blocks, Stripe width=0 blocks
+65536 inodes, 262144 blocks
+13107 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=268435456
+8 block groups
+32768 blocks per group, 32768 fragments per group
+8192 inodes per group
+Superblock backups stored on blocks: 
+	32768, 98304, 163840, 229376
+
+Allocating group tables: 0/8   done                            
+Writing inode tables: 0/8   done                            
+Creating journal (8192 blocks): done
+Writing superblocks and filesystem accounting information: 0/8   done
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mkfs.ext4 /dev/VolGroup00/LogVol05ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Clvcreate -L 1G -n LogVol05ext4 /dev/VolGroup00[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Ps /mnt/vg00vl04_ext4/touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/blk[Kmount -aecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt/vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[Acat /etc/fstab[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[17@sed -i '/vg00vl04/d'[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cmount -a[Ktn[C[C[Ccat /etc/fstabecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt.vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[A[42Pblkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[27Pmkdir /mnt/vg00vl04_ext4fs.ext4 /dev/VolGroup00/LogVol04ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pdir /mnt/vg00vl04_ext4[1P_ext45_ext4
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mkdir /mnt/vg00vl05_ext4fs.ext4 /dev/VolGroup00/LogVol05ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Clvcreate -L 1G -n LogVol05ext4 /dev/VolGroup00[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Ps /mnt/vg00vl04_ext4/touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/blk[Kmount -aecho 'UUID='`blkid /dev/VolGroup00/LogVol04ext4 -s UUID -o value`' /mnt/vg00vl04_ext4 ext4 deffaults 0 0' >> /etc/fstab[1P[1P[1P[1P[1P[1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C 0[1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C 0 [1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cr 0[1@ [A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Co [1@0[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C_ext4 ext4 ro 0[1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C5_ext4 ext4 ro [1@0[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cext4 -s UUID -o value`' /mnt/vg00vl05_ext4 ext4 ro 0[1P[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C5ext4 -s UUID -o value`' /mnt/vg00vl05_ext4 ext4 ro [1@0[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# cat /etc/fstab 
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+UUID=51f48e25-4911-4d16-97f5-606a44e5b133 /home           xfs    defaults        0 0
+UUID=205c2d41-7629-4154-a43f-5ee56355cd26 /var           xfs    defaults        0 0
+
+UUID=afd66927-2f2f-492d-97ee-def1ffb70f70 /mnt/vg00vl04_ext4 ext4 defaults 0 0
+UUID=6869e356-4f4d-49c4-8ecc-855143f4b2f5 /mnt/vg00vl05_ext4 ext4 ro 0 0
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# mount -a
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblk
+NAME                              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                 8:0    0   40G  0 disk 
+├─sda1                              8:1    0    1M  0 part 
+├─sda2                              8:2    0    1G  0 part /boot
+└─sda3                              8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00           253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01           253:1    0  1.5G  0 lvm  [SWAP]
+  ├─VolGroup00-LogVol02Home       253:2    0    4G  0 lvm  /home
+  ├─VolGroup00-LogVol04ext4       253:8    0    1G  0 lvm  /mnt/vg00vl04_ext4
+  └─VolGroup00-LogVol05ext4       253:9    0    1G  0 lvm  /mnt/vg00vl05_ext4
+sdb                                 8:16   0   10G  0 disk 
+sdc                                 8:32   0    2G  0 disk 
+sdd                                 8:48   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_0 253:4    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+sde                                 8:64   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_1 253:6    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblkmount -acat /etc/fstab echo 'UUID='`blkid /dev/VolGroup00/LogVol05ext4 -s UUID -o value`' /mnt/vg00vl05_ext4 ext4 ro  0 0' >> /etc/fstab[A[C[C[C[C[Cmkdir /mnt/vg00vl05_ext4[K
+[K[A[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Cfs.ext4 /dev/VolGroup00/LogVol05ext4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[Clvcreate -L 1G -n LogVol05ext4 /dev/VolGroup00[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[24Ps /mnt/vg00vl04_ext4/touch /mnt/vg00vl04_ext4/createtest1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[14Pls /mnt/vg00vl04_ext4/[1P_ext4/5_ext4/
+[0m[01;34mlost+found[0m
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# touch /mnt/vg00vl05_ext4/test1
+touch: cannot touch ‘/mnt/vg00vl05_ext4/test1’: Read-only file system
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# touch /mnt/vg00vl05_ext4/test1[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[8Pls /mnt/vg00vl05_ext4/
+[0m[01;34mlost+found[0m
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# Такие дела :)[1@#
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# ыув -ш [K[K[K[K[K[K[Ksed -i '' /etc/fstab[C[1@/[1@v[1@g[1@0[1@0[1@l[1@v[1@0[1@4[1@/[1@d
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# sed -i '/vg00lv04/d' /etc/fstab[C[1P[1@5
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# cat /etc/fstab
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+UUID=51f48e25-4911-4d16-97f5-606a44e5b133 /home           xfs    defaults        0 0
+UUID=205c2d41-7629-4154-a43f-5ee56355cd26 /var           xfs    defaults        0 0
+
+UUID=afd66927-2f2f-492d-97ee-def1ffb70f70 /mnt/vg00vl04_ext4 ext4 defaults 0 0
+UUID=6869e356-4f4d-49c4-8ecc-855143f4b2f5 /mnt/vg00vl05_ext4 ext4 ro 0 0
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# cat /etc/fstab[17@sed -i '/vg00lv05/d'[C[C[C[C[C[C[C[C[C[C[C4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[1P[1P[1@v[1@l
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# sed -i '/vg00vl04/d' /etc/fstab[1P[1@5
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# sed -i '/vg00vl05/d' /etc/fstab4[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[C[17Pcat[C[C[C[C[C[C[C[C[C[C[C
+
+#
+# /etc/fstab
+# Created by anaconda on Sat May 12 18:50:26 2018
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk'
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info
+#
+/dev/mapper/VolGroup00-LogVol00 /                       xfs     defaults        0 0
+UUID=570897ca-e759-4c81-90cf-389da6eee4cc /boot                   xfs     defaults        0 0
+/dev/mapper/VolGroup00-LogVol01 swap                    swap    defaults        0 0
+UUID=51f48e25-4911-4d16-97f5-606a44e5b133 /home           xfs    defaults        0 0
+UUID=205c2d41-7629-4154-a43f-5ee56355cd26 /var           xfs    defaults        0 0
+
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# umount /mnt/vg00vl04_ext4/[K
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# umount /mnt/vg00vl04_ext4[1P_ext45_ext4
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblk
+NAME                              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                 8:0    0   40G  0 disk 
+├─sda1                              8:1    0    1M  0 part 
+├─sda2                              8:2    0    1G  0 part /boot
+└─sda3                              8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00           253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01           253:1    0  1.5G  0 lvm  [SWAP]
+  ├─VolGroup00-LogVol02Home       253:2    0    4G  0 lvm  /home
+  ├─VolGroup00-LogVol04ext4       253:8    0    1G  0 lvm  
+  └─VolGroup00-LogVol05ext4       253:9    0    1G  0 lvm  
+sdb                                 8:16   0   10G  0 disk 
+sdc                                 8:32   0    2G  0 disk 
+sdd                                 8:48   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_0 253:4    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+sde                                 8:64   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_1 253:6    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lvremove /dev/VolGroup00/LogVol04ext4
+Do you really want to remove active logical volume VolGroup00/LogVol04ext4? [y/n]: y
+  Logical volume "LogVol04ext4" successfully removed
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lvremove /dev/VolGroup00/LogVol04ext4[1Pext45ext4
+Do you really want to remove active logical volume VolGroup00/LogVol05ext4? [y/n]: y
+  Logical volume "LogVol05ext4" successfully removed
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# lsblk
+NAME                              MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+sda                                 8:0    0   40G  0 disk 
+├─sda1                              8:1    0    1M  0 part 
+├─sda2                              8:2    0    1G  0 part /boot
+└─sda3                              8:3    0   39G  0 part 
+  ├─VolGroup00-LogVol00           253:0    0    8G  0 lvm  /
+  ├─VolGroup00-LogVol01           253:1    0  1.5G  0 lvm  [SWAP]
+  └─VolGroup00-LogVol02Home       253:2    0    4G  0 lvm  /home
+sdb                                 8:16   0   10G  0 disk 
+sdc                                 8:32   0    2G  0 disk 
+sdd                                 8:48   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_0  253:3    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_0 253:4    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+sde                                 8:64   0    1G  0 disk 
+├─VolGroup01-LogVol03Var_rmeta_1  253:5    0    4M  0 lvm  
+│ └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+└─VolGroup01-LogVol03Var_rimage_1 253:6    0  900M  0 lvm  
+  └─VolGroup01-LogVol03Var        253:7    0  900M  0 lvm  /var
+]0;root@lab3lvm:/home/vagrant[root@lab3lvm vagrant]# exit
+exit
+
+Script done on Tue 14 May 2019 10:45:17 AM UTC

@@ -1,0 +1,7 @@
+---
+#bacula_sd_pass: "\"@@SD_PASSWORD@@\""
+#bacula_sd_name: bclient-sd
+#bacula_sd_port: 9103
+#bacula_sd_devicename: FileStorage
+file_storage_path: /var/bacula
+...

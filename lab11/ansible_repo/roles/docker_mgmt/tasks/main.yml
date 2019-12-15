@@ -1,0 +1,63 @@
+---
+# Добавим репозиторий docker ...
+- name: add docker repo
+  get_url:
+    url: https://download.docker.com/linux/centos/docker-ce.repo
+    dest: /etc/yum.repos.d/docker-ce.repo
+
+# ... и дёрнем yum для обновления
+- name: yum update cache
+  yum:
+    update_cache: yes
+
+# Установим необходимые пакеты
+- name: docker install
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - epel-release
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+
+# Запустим docker
+- name: enable docker
+  systemd:
+    name: docker
+    enabled: yes 
+  notify: restart_docker
+
+# А вот тут интересно:
+# технически, сам docker работает и управляется без расширенных прав, но 
+# по-особенному ведёт себя его сокет /var/run/docker.socket
+# Параметры запуска сокета определяются в /usr/lib/systemd/system/docker.socket.
+# Конкретно это SocketUser=root, SocketGroup=docker, SocketMode=0660. Отсюда
+# несколько вариантов предоставления доступа: 1. быть root или действовать 
+# непосредственно от его имени (sudo); 2. быть в группе docker (этот быстрый 
+# способ есть на сайте разработчиков); 3. расширить права с 0660 до, например, 0666
+# (небезопасно, т.к. дает возможность любому пользователю рулить docker и противоречит
+# условиям задачи). Наиболее адекватным в данном случае вижу добавление пользователя
+# в группу docker, что и сделаем.
+- name: allow user to manage docker
+  user:
+    name: "{{ testadminusername }}"
+    append: yes
+    groups: "{{ docker_group }}"
+
+# В данном случае проще и быстрее добавить пользователю прав на выполение 
+# рестарта docker через sudoers (sudo systemctl restart docker.service)
+- name: allow user to restart docker
+  template:
+    backup: true
+    owner: root
+    group: wheel
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: sudoers.j2, dest: "{{ sudoers_path }}{{ testadminusername }}" }
+...

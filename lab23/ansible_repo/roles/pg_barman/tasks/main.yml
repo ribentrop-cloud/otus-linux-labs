@@ -1,0 +1,472 @@
+---
+- name: Get barman repo-script from 2ndQuadrant
+  get_url:
+    url: https://dl.2ndquadrant.com/default/release/get/11/rpm
+    dest: /tmp/install-barman-repo.sh
+    mode: '0500'
+
+- name: Get barman repo-script from 2ndQuadrant
+  get_url:
+    url: https://dl.2ndquadrant.com/default/release/get/11/rpm
+    dest: /tmp/install-barman-repo.sh
+    mode: '0500'
+  delegate_to: "{{ master_hostname }}"
+
+- name: Install barman-repo from script
+  command: /tmp/install-barman-repo.sh
+  args:
+    creates: /etc/yum.repos.d/2ndquadrant-dl-default-release-pg11.repo
+
+- name: Install barman-repo from script
+  command: /tmp/install-barman-repo.sh
+  args:
+    creates: /etc/yum.repos.d/2ndquadrant-dl-default-release-pg11.repo
+  delegate_to: "{{ master_hostname }}"
+
+- name: Install barman
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - barman
+
+- name: Install barman
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - barman
+  delegate_to: "{{ master_hostname }}"
+
+- name: Install barman-cli on {{ master_hostname }}.{{ domain }}
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - barman-cli
+  delegate_to: "{{ master_hostname }}"
+
+- name: Check barman user
+  become_user: postgres
+  command: psql postgres -tAc "SELECT 1 from pg_roles where rolname='{{ barman_username }}'"
+  register: barman_user_exists
+  delegate_to: "{{ master_hostname }}"
+
+- name: Create barman user
+  become_user: postgres
+  when: barman_user_exists.stdout != "1"
+  command: psql postgres -c "CREATE USER {{ barman_username }} WITH SUPERUSER PASSWORD '{{ barman_password }}'"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Check barman streaming user
+  become_user: postgres
+  command: psql postgres -tAc "SELECT 1 from pg_roles where rolname='{{ barman_streaming_username }}'"
+  register: barman_streaming_user_exists
+  delegate_to: "{{ master_hostname }}"
+
+- name: Create barman streaming user
+  become_user: postgres
+  when: barman_streaming_user_exists.stdout != "1"
+  command: psql postgres -c "CREATE USER {{ barman_streaming_username }} WITH REPLICATION PASSWORD '{{ barman_streaming_password }}'"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Check barman replication slot
+  become_user: postgres
+  command: psql postgres -tAc "SELECT 1 from pg_replication_slots  where slot_name='{{ barman_slot }}'"
+  register: barman_slot_exists
+  delegate_to: "{{ master_hostname }}"
+
+- name: Create barman replication slot
+  become_user: postgres
+  when: barman_slot_exists.stdout != "1"
+  command: psql postgres -c "SELECT * FROM pg_create_physical_replication_slot('{{ barman_slot }}');"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Copy barman.conf to {{ backup_hostname }}.{{ domain }}
+  template:
+    owner: root
+    group: root
+    mode: '0644'
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: etcbarman.conf.j2, dest: "/etc/barman.conf" }
+    - { src: barman.conf.j2, dest: "/etc/barman.d/{{ master_hostname }}.{{ domain }}.conf" }
+
+- name: Configuring {{ pg_data_path }}/pg_hba.conf on {{ master_hostname }}.{{ domain }}
+  lineinfile:
+    path: "{{ pg_data_path }}/pg_hba.conf"
+    line: "host all {{ barman_username }} {{ backup_ip }}/32 md5"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+  notify: reload_postgresql_master
+
+- name: Configuring {{ pg_data_path }}/pg_hba.conf on {{ master_hostname }}.{{ domain }}
+  lineinfile:
+    path: "{{ pg_data_path }}/pg_hba.conf"
+    line: "host replication {{ barman_streaming_username }} {{ backup_ip }}/32 md5"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+  notify: reload_postgresql_master
+
+- name: Copy {{ barman_home }}/.pgpass to {{ backup_hostname }}.{{ domain }}
+  template:
+    owner: barman
+    group: barman
+    mode: '0600'
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: ".pgpass.j2", dest: "{{ barman_home }}/.pgpass" }
+
+- name: Replace archive command in {{ pg_data_path }}/postgresql.conf on {{ master_hostname }}.{{ domain }}
+  replace:
+    path: "{{ pg_data_path }}/postgresql.conf"
+    regexp: '^archive_command.*'
+    replace: "archive_command = 'barman-wal-archive {{ backup_hostname }}.{{ domain }} {{ master_hostname }}.{{ domain }} %p'"
+  delegate_to: "{{ master_hostname }}"
+  notify: reload_postgresql_master
+
+- name: Replace archive command in {{ pg_data_path }}/postgresql.conf on {{ replica_hostname }}.{{ domain }}
+  replace:
+    path: "{{ pg_data_path }}/postgresql.conf"
+    regexp: '^archive_command.*'
+    replace: "archive_command = 'barman-wal-archive {{ backup_hostname }}.{{ domain }} {{ replica_hostname }}.{{ domain }} %p'"
+  delegate_to: "{{ replica_hostname }}"
+  notify: reload_postgresql_replica
+
+- name: Create directory for ssh on {{ backup_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh"
+    state: directory
+    owner: postgres
+    group: postgres
+  delegate_to: "{{ backup_hostname }}"
+
+- name: Create {{ pg_path }}/.ssh/known_hosts on {{ backup_hostname }}
+  file:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    owner: postgres
+    group: postgres
+    mode: '0644'
+    state: touch
+
+- name: Generate SSH keypair for ssh on {{ backup_hostname }}
+  openssh_keypair:
+    path: "{{ pg_path }}/.ssh/id_rsa"
+    type: rsa
+    owner: postgres
+    group: postgres
+    mode: '0600'
+
+- name: Create directory for barman on {{ backup_hostname }}
+  file:
+    path: "{{ barman_home }}/.ssh"
+    state: directory
+    owner: barman
+    group: barman
+
+- name: Create {{ pg_path }}/.ssh/known_hosts on {{ backup_hostname }} for barman
+  file:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    owner: barman
+    group: barman
+    mode: '0644'
+    state: touch
+
+- name: Generate SSH keypair for barman on {{ backup_hostname }}
+  openssh_keypair:
+    path: "{{ barman_home }}/.ssh/id_rsa"
+    type: rsa
+    owner: barman
+    group: barman
+    mode: '0600'
+
+- name: Create directory for ssh on {{ master_hostname }} for barman
+  file:
+    path: "{{ barman_home }}/.ssh"
+    state: directory
+    owner: barman
+    group: barman
+  delegate_to: "{{ master_hostname }}"
+
+- name: Create {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  file:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    owner: barman
+    group: barman
+    mode: '0644'
+    state: touch
+  delegate_to: "{{ master_hostname }}"
+
+- name: Generate SSH keypair for ssh on {{ master_hostname }} for barman
+  openssh_keypair:
+    path: "{{ barman_home }}/.ssh/id_rsa"
+    type: rsa
+    owner: barman
+    group: barman
+    mode: '0600'    
+  delegate_to: "{{ master_hostname }}"
+
+- name: Take data from keyfile for ssh on {{ backup_hostname }} ...
+  command: "cat {{ pg_path }}/.ssh/id_rsa.pub"
+  register: data_keyfile_3
+
+- name: ... and set authorized key taken from file on {{ backup_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_3.stdout }}"
+
+- name: Set authorized key taken from file from {{ backup_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_3.stdout }}"
+  delegate_to: "{{ master_hostname }}"
+
+#!!!!!!
+- name: Set authorized key taken from file from {{ backup_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_3.stdout }}"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Take data from keyfile for ssh on {{ master_hostname }} ...
+  command: "cat {{ pg_path }}/.ssh/id_rsa.pub"
+  register: data_keyfile_4
+  delegate_to: "{{ master_hostname }}"
+
+- name: ... and set authorized key taken from file on {{ backup_hostname }}
+  authorized_key:
+    user: postgres
+    state: present
+    key: "{{ data_keyfile_4.stdout }}"
+
+#!!!!
+- name: ... and set authorized key taken from file on {{ backup_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_4.stdout }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }}.{{ domain }}
+  command: "ssh-keyscan -H {{ master_hostname }}.{{ domain }}"
+  register: server3_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server3_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_hostname }}.{{ domain }}
+  command: "ssh-keyscan -H {{ backup_hostname }}.{{ domain }}"
+  register: server4_kh
+  delegate_to: "{{ master_hostname }}"
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server4_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }}
+  command: "ssh-keyscan -H {{ master_hostname }}"
+  register: server3_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server3_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_hostname }}
+  command: "ssh-keyscan -H {{ backup_hostname }}"
+  register: server4_kh
+  delegate_to: "{{ master_hostname }}"
+  
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server4_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }}
+  command: "ssh-keyscan -H {{ master_hostname }}"
+  register: server3_kh
+
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server3_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_ip }}
+  command: "ssh-keyscan -H {{ backup_ip }}"
+  register: server4_kh
+  delegate_to: "{{ master_hostname }}"
+  
+- name: Configuring {{ pg_path }}/.ssh/known_hosts on {{ master_ip }}
+  lineinfile:
+    path: "{{ pg_path }}/.ssh/known_hosts"
+    line: "{{ server4_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+
+#22
+- name: Take data from keyfile for ssh on {{ backup_hostname }} ...
+  command: "cat {{ barman_home }}/.ssh/id_rsa.pub"
+  register: data_keyfile_5
+
+- name: ... and set authorized key taken from file on {{ backup_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_5.stdout }}"
+
+- name: Set authorized key taken from file from {{ backup_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_5.stdout }}"
+  delegate_to: "{{ master_hostname }}"
+
+# !!!
+- name: Set authorized key taken from file from {{ backup_hostname }}
+  authorized_key:
+    user: postgres # < !!!!!!!
+    state: present
+    key: "{{ data_keyfile_5.stdout }}"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Take data from keyfile for ssh on {{ master_hostname }} ...
+  command: "cat {{ barman_home }}/.ssh/id_rsa.pub"
+  register: data_keyfile_6
+  delegate_to: "{{ master_hostname }}"
+
+- name: ... and set authorized key taken from file on {{ master_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_6.stdout }}"
+  delegate_to: "{{ master_hostname }}"
+
+- name: Set authorized key taken from file from {{ master_hostname }}
+  authorized_key:
+    user: barman
+    state: present
+    key: "{{ data_keyfile_6.stdout }}"
+
+# !!!
+- name: Set authorized key taken from file from {{ master_hostname }}
+  authorized_key:
+    user: postgres # < !!!!!!!
+    state: present
+    key: "{{ data_keyfile_6.stdout }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }}.{{ domain }}
+  command: "ssh-keyscan -H {{ master_hostname }}.{{ domain }}"
+  register: server5_kh
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server5_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_hostname }}.{{ domain }}
+  command: "ssh-keyscan -H {{ backup_hostname }}.{{ domain }}"
+  register: server6_kh
+  delegate_to: "{{ master_hostname }}"
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server6_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_hostname }}
+  command: "ssh-keyscan -H {{ master_hostname }}"
+  register: server5_kh
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server5_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_hostname }}
+  command: "ssh-keyscan -H {{ backup_hostname }}"
+  register: server6_kh
+  delegate_to: "{{ master_hostname }}"
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server6_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+- name: Accept SSH fingerprints from {{ master_ip }}
+  command: "ssh-keyscan -H {{ master_ip }}"
+  register: server5_kh
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ backup_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server5_kh.stdout }}"
+    state: present
+
+- name: Accept SSH fingerprints from {{ backup_ip }}
+  command: "ssh-keyscan -H {{ backup_ip }}"
+  register: server6_kh
+  delegate_to: "{{ master_hostname }}"
+
+- name: Configuring {{ barman_home }}/.ssh/known_hosts on {{ master_hostname }}
+  lineinfile:
+    path: "{{ barman_home }}/.ssh/known_hosts"
+    line: "{{ server6_kh.stdout }}"
+    state: present
+  delegate_to: "{{ master_hostname }}"
+
+- name: Recursively change permissions of {{ pg_path }}
+  file:
+    path: "{{ pg_path }}/11"
+    state: directory
+    recurse: yes
+    mode: '0705'
+  delegate_to: "{{ master_hostname }}"
+
+#- name: Reload postgresql on {{ master_hostname }}.{{ domain }}
+#  systemd:
+#    name: postgresql-11.service
+#    state: reloaded
+#  delegate_to: "{{ master_hostname }}"
+#
+#- name: Reload postgresql on {{ replica_hostname }}.{{ domain }}
+#  systemd:
+#    name: postgresql-11.service
+#    state: reloaded
+#  delegate_to: "{{ replica_hostname }}"
+#
+#- name: Start WAL archivation from {{ master_hostname }}.{{ domain }}
+#  command: "barman switch-wal --archive {{ master_hostname }}.{{ domain }}"
+#  become: yes
+#  become_user: barman
+#  ignore_errors: true
+#
+#- name: Set WAL archivation into cron
+#  command: "barman cron"
+#  become: yes
+#  become_user: barman
+#  ignore_errors: true
+...

@@ -1,0 +1,62 @@
+---
+- name: elk GPG key install
+  rpm_key:
+    state: present
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+- name: elk yum-templates install
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: elasticsearch.repo.j2, dest: "/etc/yum.repos.d/elasticsearch.repo" }
+    - { src: kibana.repo.j2, dest: "/etc/yum.repos.d/kibana.repo" }
+    - { src: logstash.repo.j2, dest: "/etc/yum.repos.d/logstash.repo" }
+
+- name: elk packages install
+  yum:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+    - java-1.8.0-openjdk
+    - elasticsearch
+    - kibana
+    - logstash
+
+- name: elk config-templates install
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items: 
+    - { src: logstash_nginx.conf.j2, dest: "/etc/logstash/conf.d/nginx.conf" }
+    - { src: kibana.yml.j2, dest: "/etc/kibana/kibana.yml" }
+
+- name: enable elasticsearch
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: elasticsearch
+  notify: start_elasticsearch
+
+- name: enable kibana
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: kibana
+  notify: start_kibana
+
+- name: enable logstash
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: logstash
+  notify: start_logstash
+...

@@ -1,0 +1,9 @@
+---
+hostname: inetRouter
+bond_config_device_1: eth1
+bond_config_device_2: eth2
+bond_device: bond0
+bond_netmask: 30
+bond_address: 192.168.255.1
+bond_address_neighbor: 192.168.255.2
+...

@@ -1,0 +1,26 @@
+#
+# Aleksandr Gavrik, 2019, mbfx@mail.ru
+#
+# Описание сервиса для spawn-fcgi
+# Этот файл отправится в /etc/systemd/system
+# 
+[Unit]
+Description=Spawn-FCGI by mbfx for OTUS Lab7.
+# Без сети смысла поднимать веб-сервер немного
+After=network.target
+
+[Service]
+# Простой сервис
+Type=simple
+# Указываем env файл с нужными опциями
+EnvironmentFile=/etc/sysconfig/spawn-fcgi
+# Указываем PID-файл
+PIDFile=/var/run/spawn-fcgi.pid
+# Указываем опции запуска
+ExecStart=/usr/bin/spawn-fcgi -n $OPTIONS
+# Если будем убивать, то главный процесс
+KillMode=process
+
+[Install]
+# Автоматом включаемся в multi-user режиме.
+WantedBy=multi-user.target

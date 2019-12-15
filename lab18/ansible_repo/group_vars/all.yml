@@ -1,0 +1,10 @@
+---
+domain: mydomain.test # Имя домена глобально
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+vm1_hostname: vm1
+vm1_ip_addr: 192.168.11.126
+vm2_hostname: vm2
+vm2_ip_addr: 192.168.11.127
+vm3_hostname: vm3
+vm3_ip_addr: 192.168.11.128
+...

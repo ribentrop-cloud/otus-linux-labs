@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: ovpn client cert gen and copy to local machine
+  min_ansible_version: 2.4
+  galaxy_tags: [ca, client]
+
+dependencies: []
+...

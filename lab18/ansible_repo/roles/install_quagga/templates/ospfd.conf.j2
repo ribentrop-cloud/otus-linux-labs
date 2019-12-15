@@ -1,0 +1,33 @@
+hostname {{ hostname }}
+!
+!
+!
+interface eth0
+!
+interface eth1
+!
+interface {{ config_device }}.{{ vlanid_1 }}
+ip ospf network broadcast
+ip ospf hello-interval 3
+ip ospf dead-interval 12
+ip ospf cost {{ vlanid_1_cost }}
+!
+interface {{ config_device }}.{{ vlanid_2 }}
+ip ospf network broadcast
+ip ospf hello-interval 3
+ip ospf dead-interval 12
+ip ospf cost {{ vlanid_2_cost }}
+!
+interface lo
+!
+router ospf
+ospf router-id {{ loop_address }}
+passive-interface eth0
+passive-interface eth1
+passive-interface lo
+network {{ vlanid_1_network }}/{{ vlanid_1_netmask }} area 0
+network {{ vlanid_2_network }}/{{ vlanid_2_netmask }} area 0
+network {{ loop_address }}/{{ loop_netmask }} area {{ loop_area }}
+!
+line vty
+!

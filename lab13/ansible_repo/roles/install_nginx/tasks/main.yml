@@ -1,0 +1,40 @@
+---
+- name: epel install
+  yum:
+    name: epel-release
+    state: present
+  tags:
+    - epel
+    - packages
+
+- name: nginx install
+  yum:
+    name: nginx
+    state: present
+  tags:
+    - nginx
+    - packages
+
+- name: nginx enabled in systemd
+  systemd:
+    name: nginx
+    enabled: true # nginx в enabled
+  tags:
+    - nginx
+    - systemd
+
+- name: nginx provision from template
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items: # Конфиги из шаблонов
+    - { src: nginx.conf.j2, dest: "{{ nginx_conf_path }}nginx.conf" }
+    - { src: index.html.j2, dest: "{{ nginx_root_path }}index.html" }
+  tags:
+    - nginx
+    - config
+  notify: restart_nginx # Дёргаем notify
+...

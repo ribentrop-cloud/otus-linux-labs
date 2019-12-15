@@ -1,0 +1,11 @@
+---
+# ЭКСПЕРИМЕНТ! НЕ РАБОТАЕТ КАК НАДО!
+# ОСТАВЛЕН ДЛЯ ДАЛЬНЕЙШЕЙ ДОРАБОТКИ!
+galaxy_info:
+  author: mbfx
+  description: ocserv client cert gen and copy to local machine
+  min_ansible_version: 2.5
+  galaxy_tags: [ca, client]
+
+dependencies: []
+...

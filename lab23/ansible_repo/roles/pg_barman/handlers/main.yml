@@ -1,0 +1,13 @@
+---
+- name: "reload_postgresql_master"
+  systemd:
+    name: postgresql-11.service
+    state: reloaded
+  delegate_to: "{{ master_hostname }}"
+
+- name: "reload_postgresql_replica"
+  systemd:
+    name: postgresql-11.service
+    state: reloaded
+  delegate_to: "{{ replica_hostname }}"
+...

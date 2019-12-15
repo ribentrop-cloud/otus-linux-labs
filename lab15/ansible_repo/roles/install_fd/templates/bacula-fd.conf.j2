@@ -1,0 +1,27 @@
+Director {
+  Name = {{ bacula_dir_name }}
+  Password = {{ bacula_fd_pass }}
+}
+
+Director {
+  Name = {{ bacula_mon_name }}
+  Password = {{ bacula_mon_pass_fd }}
+  Monitor = yes
+}
+
+FileDaemon {
+  Name = {{ bacula_fd_name }}
+  FDport = {{ bacula_fd_port }}
+  WorkingDirectory = /var/spool/bacula
+  Pid Directory = /var/run
+  Maximum Concurrent Jobs = 20
+  PKI Signatures = Yes # enable encryption
+  PKI Encryption = Yes # enable encryption
+  PKI Keypair = "/etc/bacula/fd.pem" # enable encryption
+  PKI Master Key = "/etc/bacula/master.cert" # enable encryption
+}
+
+Messages {
+  Name = Standard
+  director = {{ bacula_dir_name }} = all, !skipped, !restored
+}

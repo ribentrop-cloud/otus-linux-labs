@@ -1,0 +1,22 @@
+---
+- name: mysql (otus-mysql homework)
+  hosts: master
+  become: true
+  gather_facts: yes
+  tags:
+    - mysql
+
+  roles:
+    - mysql_master
+    - db_provision
+
+- name: mysql (otus-mysql homework)
+  hosts: replica
+  become: true
+  gather_facts: yes
+  tags:
+    - mysql
+
+  roles:
+    - mysql_replica
+...

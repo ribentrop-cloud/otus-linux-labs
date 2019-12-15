@@ -1,0 +1,84 @@
+version: '2'
+
+services:
+  mysql_wp:
+    image: mysql:5.6.45
+    command: bash -c "chown -R mysql:mysql /var/log/mysql && exec /entrypoint.sh mysqld"
+    entrypoint: ""
+    environment:
+      - MYSQL_ROOT_PASSWORD={{ db_password }}
+    volumes:
+      - ./wordpress/mysql:/var/lib/mysql
+      - ./logs/wordpress/mysqld:/var/log/mysql
+      - ./config/wordpress/wp_mysql.cnf:/etc/mysql/mysql.conf.d/wp_mysql.cnf
+    networks:
+      - back
+  
+  wordpress:
+    image: wordpress:5.2.3-php7.3-fpm
+    environment:
+       - WORDPRESS_DB_HOST=mysql_wp
+       - WORDPRESS_DB_PASSWORD={{ db_password }}
+    volumes:
+      - ./wordpress/html:/var/www/html
+      - ./config/wordpress/wp_php.ini:/usr/local/etc/php/conf.d/wp_php.ini
+    networks:
+      - front_wp
+      - back
+    depends_on:
+      - mysql_wp
+    restart: always
+
+  ghost:
+    image: ghost:2.31.1
+    volumes:
+      - ./ghost/content:/var/lib/ghost/content
+    environment:
+      - NODE_ENV=production
+      - database__client=mysql
+      - database__connection__host=mysql_wp
+      - database__connection__user=root
+      - database__connection__password={{ db_password }}
+      - database__connection__database=ghost
+      - url=http://{{ webhost_ip }}:82
+    networks:
+      - front_gh
+      - back
+    depends_on:
+      - mysql_wp
+    restart: always
+
+  python:
+    image: mbfx/flask_uwsgi_demo_app:v1
+    networks:
+      - front_py
+    restart: always
+
+  nginx:
+    image: nginx:stable
+    ports:
+      - 80:80
+      - 81:81
+      - 82:82
+    volumes:
+      - ./wordpress/html:/var/www/html/wp
+      - ./logs/nginx:/var/log/nginx
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/wordpress/wp_nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./config/python/py_nginx.conf:/etc/nginx/conf.d/python.conf
+      - ./config/ghost/gh_nginx.conf:/etc/nginx/conf.d/ghost.conf
+    networks:
+      - front_wp
+      - front_py
+      - front_gh
+    depends_on:
+      - wordpress
+      - python
+      - ghost
+    restart: always
+
+networks:
+  front_wp:
+  front_py:
+  front_gh:
+  back:

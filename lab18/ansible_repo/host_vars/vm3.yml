@@ -1,0 +1,18 @@
+---
+ip_addr: 192.168.11.128
+hostname: vm3
+config_device: eth2
+vlanid_1: 20
+vlanid_1_network: 192.168.20.0
+vlanid_1_netmask: 24
+vlanid_1_address: 192.168.20.3
+vlanid_1_cost: 100
+vlanid_2: 30
+vlanid_2_network: 192.168.30.0
+vlanid_2_netmask: 24
+vlanid_2_address: 192.168.30.3
+vlanid_2_cost: 100
+loop_address: 10.0.0.3
+loop_netmask: 32
+loop_area: 3
+...

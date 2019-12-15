@@ -1,0 +1,6 @@
+---
+- name: "restart_mysql"
+  systemd:
+    name: mysqld.service
+    state: restarted
+...

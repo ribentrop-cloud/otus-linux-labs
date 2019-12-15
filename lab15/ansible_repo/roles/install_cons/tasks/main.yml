@@ -1,0 +1,16 @@
+---
+- name: bacula-console install
+  yum:
+    name: bacula-console
+    state: present
+
+- name: bacula-console provision from template
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: bconsole.conf.j2, dest: "/etc/bacula/bconsole.conf" }
+...

@@ -1,0 +1,38 @@
+---
+- name: install openvpn
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - openvpn
+    - libselinux-python
+    - policycoreutils-python
+
+- name: add port 1195 to selinux allowed
+  seport:
+    ports: 1195
+    proto: tcp
+    state: present
+    setype: openvpn_port_t
+    reload: yes
+
+- name: generate DH
+  openssl_dhparam:
+    path: "{{ ovpn_server_config_path }}{{ ovpn_ras_DH_filename }}"
+    size: "{{ ovpn_DH_size }}"
+
+- name: install configs from template
+  template:
+    backup: true
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: server_ras_tun.conf.j2, dest: "{{ ovpn_server_config_path }}ras.conf" }
+
+- name: enable and start openvpn-server@ras
+  systemd:
+    name: openvpn-server@ras
+    enabled: true
+  notify: restart_openvpn-server@ras
+...

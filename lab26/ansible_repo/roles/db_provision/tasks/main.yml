@@ -1,0 +1,63 @@
+---
+- name: Check for replay (/opt/provision_db_master exists) on "{{ master_hostname }}"
+  stat:
+    path: /opt/provision_db_master
+  register: provision_db_master
+
+- name: Check for replay (/opt/provision_db_master exists) on "{{ replica_hostname }}"
+  stat:
+    path: /opt/provision_db_replica
+  register: provision_db_replica
+  delegate_to: "{{ replica_hostname }}"
+
+- name: Manage database and their users on "{{ master_hostname }}"
+  command: 'mysql --batch --execute="{{ item }}"'
+  with_items:
+    - CREATE DATABASE IF NOT EXISTS {{ db_name }}
+    - GRANT ALL PRIVILEGES ON {{ db_name }}.* TO '{{ mysql_user_name }}'@'localhost'
+    - FLUSH PRIVILEGES
+  when:
+    - provision_db_master.stat.exists != True
+
+- name: Manage database on "{{ replica_hostname }}"
+  command: 'mysql --batch --execute="{{ item }}"'
+  with_items:
+    - CREATE DATABASE IF NOT EXISTS {{ db_name }}
+  when:
+    - provision_db_replica.stat.exists != True
+  delegate_to: "{{ replica_hostname }}"
+  
+#- name: Provision database on "{{ master_hostname }}"
+#  command: 'mysql -D {{ db_name }} < {{ path_to_dumpfile }}/{{ db_dmp_name }}'
+#  when:
+#    - provision_db_master.stat.exists != True
+
+- name: Import {{ db_name }} database from {{ path_to_dumpfile }}/{{ db_dmp_name }}
+  mysql_db:
+    state: import
+    name: "{{ db_name }}"
+    target: "{{ path_to_dumpfile }}/{{ db_dmp_name }}"
+  when:
+    - provision_db_master.stat.exists != True
+
+- name: Set replay protection (block-file /opt/provision_db_master) on "{{ master_hostname }}"
+  file:
+    path: /opt/provision_db_master
+    state: touch
+    owner: root
+    group: root
+    mode: '0744'
+  when:
+    - provision_db_master.stat.exists != True
+
+- name: Set replay protection (block-file /opt/provision_db_replica) on "{{ replica_hostname }}"
+  file:
+    path: /opt/provision_db_replica
+    state: touch
+    owner: root
+    group: root
+    mode: '0744'
+  when:
+    - provision_db_replica.stat.exists != True
+  delegate_to: "{{ replica_hostname }}"
+...

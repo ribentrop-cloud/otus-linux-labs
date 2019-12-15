@@ -1,0 +1,15 @@
+#
+# Aleksandr Gavrik, 2019, mbfx@mail.ru
+#
+# Здесь указаны параметры сервиса-таймера скрипта-монитора слова в логе (mbfx_logmon.service)
+# Этот файл отправится в /etc/systemd/system
+# 
+[Unit]
+Description=Run script LogMon by mbfx every 30 sec
+
+[Timer]
+OnUnitActiveSec=30
+Unit=mbfx_logmon.service
+
+[Install]
+WantedBy=multi-user.target

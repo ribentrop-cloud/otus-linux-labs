@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: ovpn client install
+  min_ansible_version: 2.4
+  galaxy_tags: [ovpn, client]
+
+dependencies: [ca_client_cert]
+...

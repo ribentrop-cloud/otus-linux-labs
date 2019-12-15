@@ -1,0 +1,19 @@
+---
+# LDAP (FreeIPA) client
+domain: mydomain.test # Имя домена
+realm: MYDOMAIN.TEST # Имя рилма Kerberos
+servername: freeipa # Имя сервера FreeIPA
+server: freeipa.mydomain.test # FQDN сервера FreeIPA
+ipa_ip: 192.168.11.117 # IP адрес сервера FreeIPA
+password: ipapassword # Пароль администратора
+principal: admin # Имя пользователя администратора
+hostname: client # Имя этой машины
+my_ip: 192.168.11.118 # IP адрес клиента (этой машины)
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+username: test_ssh # Логин пользователя
+userpassword: test_ssh #Пароль пользователя
+givenname: Тест # Имя пользователя
+sn: Тестов # Фамилия пользователя
+tel: 89110000000 # Номер телефона пользователя
+mail: test@mydomain.test # Почтовый ящик пользователя
+...

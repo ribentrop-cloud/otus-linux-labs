@@ -1,0 +1,57 @@
+---
+- name: install systemd-journal-gateway # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - systemd-journal-gateway
+
+- name: make copy from /lib/systemd/system/systemd-journal-upload.service
+  copy:
+    src: /lib/systemd/system/systemd-journal-upload.service
+    dest: /etc/systemd/system/
+    remote_src: yes
+
+- name: change WatchdogSec in systemd-journal-upload.service
+  replace:
+    path: /etc/systemd/system/systemd-journal-upload.service
+    regexp: '^WatchdogSec=20min'
+    replace: "WatchdogSec=30"
+
+- name: add URL to /etc/systemd/journal-upload.conf
+  replace:
+    path: /etc/systemd/journal-upload.conf
+    regexp: '^# URL='
+    replace: "URL=http://{{ log_hostname }}.{{ domain }}:19532"
+
+#- name: mod Storage /etc/systemd/journald.conf
+#  replace:
+#    path: /etc/systemd/journald.conf
+#    regexp: '^#Storage=auto'
+#    replace: "Storage=persistent"
+
+- name: mod MaxLevelStore /etc/systemd/journald.conf 
+  replace:
+    path: /etc/systemd/journald.conf
+    regexp: '^#MaxLevelStore=debug'
+    replace: "MaxLevelStore=crit"
+
+- name: mod MaxLevelSyslog /etc/systemd/journald.conf
+  replace:
+    path: /etc/systemd/journald.conf
+    regexp: '^#MaxLevelSyslog=debug'
+    replace: "MaxLevelSyslog=crit"
+
+- name: restart JournalD
+  systemd:
+    name: systemd-journald
+    state: restarted
+
+- name: restart JournalD-upload
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: systemd-journal-upload
+    state: restarted
+...

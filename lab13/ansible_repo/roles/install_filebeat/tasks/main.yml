@@ -1,0 +1,35 @@
+---
+- name: elk GPG key install
+  rpm_key:
+    state: present
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+- name: filebeat package install
+  yum:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+    - https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.3.0-x86_64.rpm
+    
+- name: filebeat config-template install
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: filebeat.yml.j2, dest: "/etc/filebeat/filebeat.yml" }
+    
+- name: enable filebeat
+  systemd:
+    enabled: true
+    daemon_reload: yes
+    name: filebeat
+    state: restarted
+
+- name: enable nginx plugin in filebeat
+  command: filebeat modules enable nginx
+...

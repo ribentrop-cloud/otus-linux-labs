@@ -1,0 +1,27 @@
+---
+hostname: centralRouter
+bond_config_device_1: eth5
+bond_config_device_2: eth6
+bond_device: bond0
+bond_netmask: 30
+bond_address: 192.168.255.2
+bond_address_neighbor: 192.168.255.1
+config_device_1: eth1
+config_device_1_address: 192.168.254.2
+config_device_1_netmask: 30
+config_device_2: eth2
+config_device_2_address: 192.168.0.1
+config_device_2_netmask: 28
+config_device_3: eth3
+config_device_3_address: 192.168.255.9
+config_device_3_netmask: 30
+config_device_3_alias_1: 1
+config_device_3_alias_1_address: 192.168.0.33
+config_device_3_alias_1_netmask: 28
+config_device_4: eth4
+config_device_4_address: 192.168.255.5
+config_device_4_netmask: 30
+config_device_4_alias_1: 1
+config_device_4_alias_1_address: 192.168.0.65
+config_device_4_alias_1_netmask: 26
+...

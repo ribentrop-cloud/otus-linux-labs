@@ -1,0 +1,16 @@
+---
+- name: Install mysql repo
+  yum:
+    name: "http://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm"
+    state: present
+
+- name: Install mysql server
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - mysql
+    - mysql-server
+    - MySQL-python
+...

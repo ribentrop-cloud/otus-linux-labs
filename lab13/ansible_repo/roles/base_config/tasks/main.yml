@@ -1,0 +1,66 @@
+---
+- name: ntp and tzdata install # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - tzdata
+
+- name: set timezone # Задаём часовой пояс.
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: enable ntpd # Рестартим NTP.
+  systemd:
+    name: ntpd
+    state: restarted
+    enabled: true
+
+- name: set hostname # Зададим машине нужное имя.
+  hostname: 
+    name: "{{ hostname }}.{{ domain }}"
+
+- name: set elk fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^elk$'
+    replace: "{{ elk_hostname }}.{{ domain }}"
+
+- name: set log fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^log$'
+    replace: "{{ log_hostname }}.{{ domain }}"
+
+- name: set web fqdn to /etc/hostname 
+  replace:
+    path: /etc/hostname
+    regexp: '^web$'
+    replace: "{{ web_hostname }}.{{ domain }}"
+
+- name: add my own ip to hosts instead localhost
+  replace:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1(\s+){{ hostname }}(\s+){{ hostname }}.*'
+    replace: "{{ ip_addr }} {{ hostname }}.{{ domain }} {{ hostname }}"
+
+- name: add elk ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ elk_ip_addr }} {{ elk_hostname }}.{{ domain }} {{ elk_hostname }}'
+    state: present
+
+- name: add log ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ log_ip_addr }} {{ log_hostname }}.{{ domain }} {{ log_hostname }}'
+    state: present
+
+- name: add web ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ web_ip_addr }} {{ web_hostname }}.{{ domain }} {{ web_hostname }}'
+    state: present
+...

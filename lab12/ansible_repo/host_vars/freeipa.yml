@@ -1,0 +1,10 @@
+---
+# FreeIPA server
+domain: mydomain.test # Имя домена
+realm: MYDOMAIN.TEST # Имя рилма Kerberos
+hostname: freeipa # Имя этой машины (сервер FreeIPA)
+my_ip: 192.168.11.117  # IP адрес этой машины (сервер FreeIPA)
+dspassword: dmpassword # Пароль Directory Manager
+adminpassword: ipapassword # Пароль администратора
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+...

@@ -1,0 +1,5 @@
+standby_mode = on
+primary_conninfo = 'host={{ master_hostname }}.{{ domain }} port=5432 user={{ streaming_username }} password={{ streaming_password }}'
+primary_slot_name = '{{ replication_slot }}'
+#restore_command = 'cp {{ pg_path }}/archive/%f %p'
+trigger_file = '/tmp/postgresql.trigger'

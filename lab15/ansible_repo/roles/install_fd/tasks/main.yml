@@ -1,0 +1,32 @@
+---
+- name: bacula-fd install
+  yum:
+    name: bacula-client
+    state: present
+
+- name: bacula-fd enabled in systemd
+  systemd:
+    name: bacula-fd
+    enabled: true
+
+- name: encryption - copy certufucate
+  copy:
+    src: "{{ role_path }}/files/master.cert"
+    dest: /etc/bacula/
+
+- name: encryption - copy keys
+  copy:
+    src: "{{ role_path }}/files/fd.pem"
+    dest: /etc/bacula/
+
+- name: bacula-fd provision from template
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: bacula-fd.conf.j2, dest: "/etc/bacula/bacula-fd.conf" }
+  notify: restart_bacula_fd
+...

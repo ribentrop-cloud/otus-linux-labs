@@ -1,0 +1,12 @@
+---
+testusername: test_pam # Обычный пользователь
+testuserpassword: test_pam
+testadminusername: test_pam_admin # Обычный пользователь, но в группе admin_group - см. ниже
+testadminuserpassword: test_pam_admin
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+admin_group: admin # Группа для проверки
+docker_group: docker # Группа docker
+pam_script_acct_name: pam_script_acct # Имя скрипта для pam_script во время проверки accounting
+isdayoff_script_path: /etc/pam-script.d/ # Путь для скриптов pam_script
+sudoers_path: /etc/sudoers.d/ # Путь для конфигурационных файлов sudoers
+...

@@ -1,0 +1,11 @@
+---
+- name: nginx (otus-ansible homework)
+  hosts: webservers
+  become: true
+  tags:
+    - nginx
+
+  roles:
+    - install_nginx
+
+...

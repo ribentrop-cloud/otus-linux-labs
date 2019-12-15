@@ -1,0 +1,50 @@
+---
+- name: ovpn server (otus-vpn homework)
+  hosts: server
+  become: true
+  tags:
+    - base
+    - ca
+
+  roles:
+    - ca_server
+    - ovpn_server
+
+- name: ovpn client (otus-vpn homework)
+  hosts: client
+  become: true
+  tags:
+    - base
+
+  roles:
+    - ovpn_client
+
+- name: ovpn ras server (otus-vpn homework)
+  hosts: server
+  become: true
+  tags:
+    - base
+    - ca
+
+  roles:
+    - ovpn_server_ras
+
+- name: ovpn ras client (otus-vpn homework)
+  hosts: server
+  become: true
+  tags:
+    - base
+
+  roles:
+    - ca_client_cert_local
+
+- name: ocserv server (otus-vpn homework)
+  hosts: server
+  become: true
+  tags:
+    - base
+    - ca
+
+  roles:
+    - ocserv
+...

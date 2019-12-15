@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: give the user the right to restart the docker service.
+  min_ansible_version: 2.4
+  galaxy_tags: [pam]
+
+dependencies: []
+...

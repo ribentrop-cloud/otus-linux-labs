@@ -1,0 +1,14 @@
+#
+# Aleksandr Gavrik, 2019, mbfx@mail.ru
+#
+# Здесь указаны параметры Oneshot сервиса для скрипта-монитора слова в логе (mbfx_logmon.service)
+# Этот файл отправится в /etc/systemd/system
+# 
+[Unit]
+Description=Log monitor by mbfx. Checks the file and searches for a keyword there.
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sysconfig/mbfx_logmon
+ExecStart=/opt/mbfx_logmon.sh $LOG_TO_MON $WORD
+

@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: mbfx
+  description: ocserv server cert install
+  min_ansible_version: 2.4
+  galaxy_tags: [ca, server]
+
+dependencies: []
+...

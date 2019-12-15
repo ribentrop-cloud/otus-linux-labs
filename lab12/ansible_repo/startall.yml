@@ -1,0 +1,22 @@
+---
+- name: FreeIPA server (otus-ldap homework)
+  hosts: freeipa
+  become: true
+  tags:
+    - freeipa
+    - freeipa server
+
+  roles:
+    - freeipa_server
+
+- name: LDAP (FreeIPA) client (otus-ldap homework)
+  hosts: client
+  become: true
+  tags:
+    - freeipa
+    - freeipa client
+    - ldap client
+
+  roles:
+    - freeipa_client
+...

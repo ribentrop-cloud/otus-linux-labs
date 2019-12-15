@@ -1,0 +1,5 @@
+---
+# Задаём переменные
+nginx_listen_port: 8080
+nginx_root_path: /usr/share/nginx/html/
+...

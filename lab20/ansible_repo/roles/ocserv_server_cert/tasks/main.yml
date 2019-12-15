@@ -1,0 +1,45 @@
+---
+- name: Generate an OpenSSL private key for ocserv server
+  openssl_privatekey:
+    path: "{{ pki_ocserv_private_path }}{{ ocserv_private_key_name }}"
+    size: "{{ ocserv_private_key_bits }}"
+
+- name: Generate an OpenSSL CSR for ocserv server
+  openssl_csr:
+    path: "{{ pki_ocserv_certs_path }}{{ ocserv_private_key_name }}.csr"
+    privatekey_path: "{{ pki_ocserv_private_path }}{{ ocserv_private_key_name }}"
+    country_name: "{{ ocserv_country_name }}"
+    organization_name: "{{ ocserv_org_name }}"
+    email_address: "{{ ocserv_email_addr }}"
+    common_name: "{{ ocserv_common_name }}"
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    extended_key_usage:
+      - serverAuth
+
+# Заготовка, если ВМ с CA != ВМ с ocserv
+#- name: Copy CSR from client to server
+#  synchronize: src="{{ pki_ocserv_certs_path }}{{ ocserv_private_key_name }}.csr" dest="{{ pki_ocserv_certs_path }}{{ ocserv_private_key_name }}.csr"
+#  delegate_to: server
+
+- name: Generate server certificate signed with my own CA certificate
+  openssl_certificate:
+    subject:
+      CN: "{{ ocserv_common_name }}"
+    path: "{{ pki_ocserv_certs_path }}{{ ocserv_cert_name }}"
+    privatekey_path: "{{ pki_ocserv_private_path }}{{ ocserv_private_key_name }}"
+    csr_path: "{{ pki_ocserv_certs_path }}{{ ocserv_private_key_name }}.csr"
+    ownca_path: "{{ pki_CA_certs_path }}{{ CA_cert_name }}"
+    ownca_privatekey_path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    provider: ownca
+    key_usage:
+      - digitalSignature
+      - keyEncipherment
+    key_usage_strict: true
+    extended_key_usage:
+      - clientAuth
+    extended_key_usage_strict: true
+# Заготовка, если ВМ с CA != ВМ с ocserv
+#  delegate_to: server
+...

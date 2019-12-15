@@ -1,0 +1,21 @@
+---
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+domain: mydomain.test
+pg_path: /var/lib/pgsql
+pg_data_path: /var/lib/pgsql/11/data
+master_ip: 192.168.11.150
+master_hostname: master
+replica_ip: 192.168.11.151
+replica_hostname: replica
+backup_ip: 192.168.11.152
+backup_hostname: backup
+streaming_username: streaming_user
+streaming_password: streaming_password
+replication_slot: replication_slot
+barman_username: barman
+barman_password: barman_password
+barman_slot: barman
+barman_home: /var/lib/barman
+barman_streaming_username: barman_streaming_user
+barman_streaming_password: barman_streaming_password
+...

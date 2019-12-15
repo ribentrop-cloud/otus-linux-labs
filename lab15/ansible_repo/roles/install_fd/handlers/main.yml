@@ -1,0 +1,6 @@
+---
+- name: restart_bacula_fd
+  systemd:
+    name: bacula-fd
+    state: restarted
+...

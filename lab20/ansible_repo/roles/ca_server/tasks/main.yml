@@ -1,0 +1,31 @@
+---
+- name: Generate an OpenSSL private key for CA
+  openssl_privatekey:
+    path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    size: "{{ CA_private_key_bits }}"
+
+- name: Generate an OpenSSL CSR for CA
+  openssl_csr:
+    path: "{{ pki_CA_certs_path }}{{ CA_private_key_name }}.csr"
+    privatekey_path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    country_name: "{{ CA_country_name }}"
+    organization_name: "{{ CA_org_name }}"
+    email_address: "{{ CA_email_addr }}"
+    common_name: "{{ CA_common_name }}"
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    basicConstraints: ['CA:TRUE']
+    basic_constraints_critical: yes
+
+- name: Generate a Self Signed OpenSSL certificate for CA
+  openssl_certificate:
+    path: "{{ pki_CA_certs_path }}{{ CA_cert_name }}"
+    privatekey_path: "{{ pki_CA_private_path }}{{ CA_private_key_name }}"
+    csr_path: "{{ pki_CA_certs_path }}{{ CA_private_key_name }}.csr"
+    provider: selfsigned
+    key_usage:
+      - keyCertSign
+      - cRLSign
+    key_usage_strict: true
+...

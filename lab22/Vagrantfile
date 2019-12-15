@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+  config.vm.box = "centos/7"
+
+  config.vm.provider "virtualbox" do |v|
+	  v.memory = 384
+  end
+
+  config.vm.define "server" do |server|
+    server.vm.network "private_network", adapter: 2, :device => "eth1", ip: "192.168.11.11", default_router: "192.168.11.1"
+    server.vm.network "private_network", adapter: 3, :device => "eth2", ip: "192.168.50.10", virtualbox__intnet: "direct"
+    server.vm.hostname = "server"
+  end
+
+  config.vm.define "client" do |client|
+    client.vm.network "private_network", adapter: 2, :device => "eth1", ip: "192.168.11.21", default_router: "192.168.11.1"
+    client.vm.network "private_network", adapter: 3, :device => "eth2", ip: "192.168.50.20", virtualbox__intnet: "direct"
+    client.vm.hostname = "client"
+  end
+
+  config.vm.provision "shell", run: "always", inline: <<-SHELL
+    mkdir -p ~root/.ssh
+    cp ~vagrant/.ssh/auth* ~root/.ssh
+    #cat /vagrant/id_rsa.pub | awk '{print $1,$2}' >> /root/.ssh/authorized_keys
+    ip route delete default 2>&1 >/dev/null || true
+    echo "add default via 192.168.11.1"
+    ip route add default via 192.168.11.1 metric 1
+  SHELL
+
+  config.vm.provision "ansible" do |ansible|
+    ansible.compatibility_mode = "2.0"
+    ansible.playbook = "ansible_repo/startall.yml"
+    #ansible.become = "true"
+  end
+
+end

@@ -1,0 +1,60 @@
+---
+- name: epel-release install
+  yum:
+    name: epel-release
+    state: present
+
+- name: install bacula-dir and some service packages
+  yum:
+    name: "{{ packages }}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+    - bacula-director
+    - MySQL-python
+    - policycoreutils-python
+
+- name: bacula-dir enabled in systemd
+  systemd:
+    name: bacula-dir
+    enabled: true
+
+- name: exec script - grant_mysql_privileges
+  command: /usr/libexec/bacula/grant_mysql_privileges
+
+- name: exec script - create_mysql_database
+  command: /usr/libexec/bacula/create_mysql_database -u root
+
+- name: exec script - make_mysql_tables
+  command: /usr/libexec/bacula/make_mysql_tables -u bacula
+
+- name: mariadb - create user bacula 
+  mysql_user:
+    name: bacula
+    login_user: root
+    state: present
+    password: "{{ mysql_bacula_dbpassword }}"
+
+- name: select alternatives link (libbaccats-mysql)
+  alternatives:
+    name: libbaccats.so
+    link: /etc/alternatives/libbaccats.so
+    path: /usr/lib64/libbaccats-mysql.so
+
+- name: selinux bacula_t - allow to modify files 
+  selinux_permissive:
+    name: bacula_t
+    permissive: true
+
+- name: bacula-dir provision from template
+  template:
+    backup: true
+    owner: root
+    group: root
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: bacula-dir.conf.j2, dest: "/etc/bacula/bacula-dir.conf" }
+  notify: restart_bacula_dir
+...

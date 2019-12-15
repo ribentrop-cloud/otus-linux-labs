@@ -1,0 +1,27 @@
+---
+version: '3.7'
+services:
+  nginx:
+    image: mbfx/otus_lab10_task2_nginx:v1
+    ports:
+      - 8080:80
+    volumes:
+      - ./logs:/etc/logs/nginx
+      - ./php:/var/www:rw
+    links:
+      - fpm
+    networks:
+      - php_net
+
+  fpm:
+    image: mbfx/otus_lab10_task2_php:v1
+    volumes:
+      - ./php:/var/www:rw
+    networks:
+      - php_net
+
+networks:
+  php_net:
+    driver: bridge
+
+...

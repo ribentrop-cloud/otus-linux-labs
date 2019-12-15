@@ -1,0 +1,20 @@
+---
+domain: mydomain.test # Имя домена глобально
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+bserver_ip_addr: 192.168.11.124
+bserver_hostname: bserver
+bclient_ip_addr: 192.168.11.125
+bclient_hostname: bclient
+bacula_mon_name: bacula-mon
+bacula_mon_pass_fd: "\"@@MON_FD_PASSWORD@@\""
+bacula_mon_pass_sd: "\"@@MON_SD_PASSWORD@@\""
+bacula_mon_pass_dir: "\"@@MON_DIR_PASSWORD@@\""
+bacula_dir_name: bacula-dir
+bacula_fd_pass: "\"@@FD_PASSWORD@@\""
+bacula_fd_name: bclient-fd
+bacula_fd_port: 9102
+bacula_sd_pass: "\"@@SD_PASSWORD@@\""
+bacula_sd_name: bclient-sd
+bacula_sd_port: 9103
+bacula_sd_devicename: FileStorage
+...

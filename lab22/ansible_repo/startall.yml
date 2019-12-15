@@ -1,0 +1,19 @@
+---
+- name: docker (otus-nginx homework)
+  hosts: server
+  become: true
+  tags:
+    - docker
+
+  roles:
+    - docker
+
+- name: base (otus-nginx homework)
+  hosts: client
+  become: true
+  tags:
+    - base
+
+  roles:
+    - base_config
+...

@@ -1,0 +1,8 @@
+#
+# Aleksandr Gavrik, 2019, mbfx@mail.ru
+#
+# Здесь указаны переменные для сервиса скрипта-монитора слова в логе (mbfx_logmon.service)
+# Этот файл отправится в /etc/sysconfig
+# 
+LOG_TO_MON=/var/log/mbfx_monitor_test.log
+WORD="KEY"

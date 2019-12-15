@@ -1,0 +1,6 @@
+---
+nginx_listen_port: 80
+nginx_root_path: /usr/share/nginx/html/
+ip_addr: 192.168.11.119
+hostname: web
+...

@@ -1,0 +1,55 @@
+---
+- name: ntp and tzdata install # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - tzdata
+
+- name: set timezone # Задаём часовой пояс.
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: enable ntpd # Рестартим NTP.
+  systemd:
+    name: ntpd
+    state: started
+    enabled: true
+  notify: restart_ntpd
+
+- name: set hostname # Зададим машине нужное имя.
+  hostname: 
+    name: "{{ hostname }}.{{ domain }}"
+
+- name: set bserver fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^bserver$'
+    replace: "{{ bserver_hostname }}.{{ domain }}"
+
+- name: set bclient fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^bclient$'
+    replace: "{{ bclient_hostname }}.{{ domain }}"
+
+- name: add my own ip to hosts instead localhost
+  replace:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1(\s+){{ hostname }}(\s+){{ hostname }}.*'
+    replace: "{{ ip_addr }} {{ hostname }}.{{ domain }} {{ hostname }}"
+
+- name: add bserver ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ bserver_ip_addr }} {{ bserver_hostname }}.{{ domain }} {{ bserver_hostname }}'
+    state: present
+
+- name: add bclient ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ bclient_ip_addr }} {{ bclient_hostname }}.{{ domain }} {{ bclient_hostname }}'
+    state: present
+...

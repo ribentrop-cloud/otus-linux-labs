@@ -1,0 +1,8 @@
+---
+hostname: testClient2
+config_device: eth1
+vlanid_1: 20
+vlanid_1_network: 10.10.10.0
+vlanid_1_netmask: 24
+vlanid_1_address: 10.10.10.254
+...

@@ -1,0 +1,20 @@
+---
+- name: PAM (otus-pam homework)
+  hosts: otuspam
+  become: true
+  tags:
+    - pam
+
+  roles:
+    - only_admin_on_weekends
+
+- name: PAM Docker (otus-pam-docker homework)
+  hosts: otuspam
+  become: true
+  tags:
+    - pam
+    - docker
+
+  roles:
+    - docker_mgmt
+...

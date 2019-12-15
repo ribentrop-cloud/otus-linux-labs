@@ -1,0 +1,69 @@
+---
+- name: base packages install # Ставим нужные пакеты
+  yum:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+    - ntp
+    - tzdata
+    - libsemanage-python
+    - traceroute
+
+- name: set timezone # Задаём часовой пояс.
+  timezone:
+    name: "{{ ntp_timezone }}"
+
+- name: enable ntpd # Рестартим NTP.
+  systemd:
+    name: ntpd
+    state: started
+    enabled: true
+  notify: restart_ntpd
+
+- name: set hostname # Зададим машине нужное имя.
+  hostname: 
+    name: "{{ hostname }}.{{ domain }}"
+
+- name: set vm1 fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^vm1$'
+    replace: "{{ vm1_hostname }}.{{ domain }}"
+
+- name: set vm2 fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^vm2$'
+    replace: "{{ vm2_hostname }}.{{ domain }}"
+
+- name: set vm3 fqdn to /etc/hostname
+  replace:
+    path: /etc/hostname
+    regexp: '^vm3$'
+    replace: "{{ vm3_hostname }}.{{ domain }}"
+
+- name: add my own ip to hosts instead localhost
+  replace:
+    path: /etc/hosts
+    regexp: '^127\.0\.0\.1(\s+){{ hostname }}(\s+){{ hostname }}.*'
+    replace: "{{ ip_addr }} {{ hostname }}.{{ domain }} {{ hostname }}"
+
+- name: add vm1 ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ vm1_ip_addr }} {{ vm1_hostname }}.{{ domain }} {{ vm1_hostname }}'
+    state: present
+
+- name: add vm2 ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ vm2_ip_addr }} {{ vm2_hostname }}.{{ domain }} {{ vm2_hostname }}'
+    state: present
+
+- name: add vm3 ip to hosts
+  lineinfile:
+    path: /etc/hosts
+    line: '{{ vm3_ip_addr }} {{ vm3_hostname }}.{{ domain }} {{ vm3_hostname }}'
+    state: present
+...

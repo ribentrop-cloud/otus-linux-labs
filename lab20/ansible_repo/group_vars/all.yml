@@ -1,0 +1,47 @@
+---
+ntp_timezone: Europe/Kaliningrad # Часовой пояс
+pki_CA_private_path: /etc/pki/CA/private/
+pki_CA_certs_path: /etc/pki/CA/certs/
+CA_private_key_name: CA.pem
+CA_cert_name: CA.crt
+CA_private_key_bits: 4096
+CA_country_name: RU
+CA_org_name: mbfx
+CA_email_addr: mbfx@mail.ru
+CA_common_name: CA
+pki_private_path: /etc/pki/CA/private/
+pki_certs_path: /etc/pki/CA/certs/
+
+pki_ovpn_private_path: /etc/pki/CA/private/
+pki_ovpn_certs_path: /etc/pki/CA/certs/
+ovpn_server_config_path: /etc/openvpn/server/
+ovpn_client_config_path: /etc/openvpn/client/
+ovpn_private_key_bits: 2048
+ovpn_DH_size: 1024
+ovpn_DH_filename: dhparams.pem
+ovpn_private_key_name: openvpn_server.pem
+ovpn_cert_name: openvpn_server.crt
+ovpn_client_private_key_name: openvpn_client.pem
+ovpn_client_cert_name: openvpn_client.crt
+ovpn_ras_private_key_name: openvpn_ras_server.pem
+ovpn_ras_cert_name: openvpn_ras_server.crt
+ovpn_ras_client_private_key_name: openvpn_ras_client.pem
+ovpn_ras_client_cert_name: openvpn_ras_client.crt
+ovpn_ras_country_name: RU
+ovpn_ras_org_name: mbfx
+ovpn_ras_email_addr: mbfx@mail.ru
+ovpn_ras_client_common_name: rasclient
+ovpn_ras_DH_filename: dhparams_ras.pem
+ovpn_ras_pam_so_path: /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so
+
+pki_ocserv_private_path: /etc/pki/CA/private/
+pki_ocserv_certs_path: /etc/pki/CA/certs/
+ocserv_private_key_name: ocserv_server.pem
+ocserv_cert_name: ocserv_server.crt
+ocserv_private_key_bits: 2048
+ocserv_server_config_path: /etc/ocserv/
+ocserv_DH_size: 1024
+ocserv_DH_filename: dhparams.pem
+ocserv_client_private_key_name: ocserv_client.pem
+ocserv_client_cert_name: ocserv_client.crt
+...

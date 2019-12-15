@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+#
+# Aleksandr Gavrik, mbfx@mail.ru, 2019
+#
+# IsDayOff check script: проверяем выходной ли сегодня день в РФ
+# при логине пользователей вне заданной группы
+#
+# Проверяем принадлежность группе. Если нет, то продолжаем проверку.
+if groups $PAM_USER | grep &>/dev/null '\b{{ admin_group }}\b'; then
+    echo "You are in the {{ admin_group }} group."
+    exit 0
+    else
+    echo "You are not in the {{ admin_group }} group."
+fi
+# Проверяем день. Если 0, то рабочий день.
+# Воспользуемся сервисом https://isdayoff.ru/
+# Если сервис недоступен, то никого не пускать, кроме группы {{ admin_group }}.
+if [[ $(curl -s https://isdayoff.ru/$(date +%y%m%d)) -eq 0 ]]; then
+    exit 0
+fi
+# Отказ по-умочанию.
+echo "Login denied. Today is a day off! Probably..."
+exit 1
